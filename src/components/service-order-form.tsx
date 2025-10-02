@@ -23,22 +23,12 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  Command,
-  CommandInput,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
 } from "@/components/ui";
 import type { ServiceOrder, ServiceOrderFormData } from "@/lib/types";
 import { useAuth } from "@/contexts/auth-context";
 import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { suggestClientName } from '@/ai/flows/suggest-client-name';
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 
 const formSchema = z.object({
@@ -69,9 +59,6 @@ interface ServiceOrderFormProps {
 export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }: ServiceOrderFormProps) {
   const { userId, isAuthReady } = useAuth();
   const { toast } = useToast();
-  const [clientNameSuggestions, setClientNameSuggestions] = useState<string[]>([]);
-  const [isSuggestingClientName, setIsSuggestingClientName] = useState(false);
-  const [isPending, startTransition] = useTransition();
   const [dllSuggestion, setDllSuggestion] = useState<string>('');
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   
@@ -107,29 +94,6 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
         form.reset();
     }
   }, [editingOs, form]);
-
-  const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const name = e.target.value;
-    form.setValue('clientName', name);
-
-    if (name.length > 2) {
-      startTransition(async () => {
-        setIsSuggestingClientName(true);
-        const existingClientNames = existingOrders.map(o => o.clientName);
-        try {
-          const result = await suggestClientName({ partialClientName: name, existingClientNames });
-          setClientNameSuggestions(result.suggestions || []);
-        } catch (e) {
-          console.error("AI suggestion failed:", e);
-          setClientNameSuggestions([]);
-        } finally {
-          setIsSuggestingClientName(false);
-        }
-      });
-    } else {
-      setClientNameSuggestions([]);
-    }
-  };
 
   const generateDllSuggestion = async () => {
     const clientName = form.getValues('clientName');
@@ -193,38 +157,13 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nome do Cliente <span className="text-destructive">*</span></FormLabel>
-                   <Popover open={clientNameSuggestions.length > 0} onOpenChange={() => setClientNameSuggestions([])}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Ex: Pastelaria do Zé"
-                          onChange={handleClientNameChange}
-                          autoComplete="off"
-                        />
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                      <Command>
-                        <CommandList>
-                          <CommandEmpty>Nenhuma sugestão.</CommandEmpty>
-                          <CommandGroup heading="Sugestões de Nome">
-                            {clientNameSuggestions.map((suggestion) => (
-                              <CommandItem
-                                key={suggestion}
-                                onSelect={() => {
-                                  form.setValue("clientName", suggestion);
-                                  setClientNameSuggestions([]);
-                                }}
-                              >
-                                {suggestion}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ex: Pastelaria do Zé"
+                      autoComplete="off"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
