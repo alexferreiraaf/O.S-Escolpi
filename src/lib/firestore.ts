@@ -23,6 +23,7 @@ export async function addServiceOrder(data: ServiceOrderFormData) {
         digitalCertificate: data.digitalCertificate || null,
         remoteAccessPhoto: data.remoteAccessPhoto || '',
         remoteAccessCode: data.remoteAccessCode || '',
+        createdBy: data.createdBy || '',
         ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
             email: data.ifoodEmail || '',
             password: data.ifoodPassword || ''
@@ -49,6 +50,7 @@ export async function updateServiceOrder(orderId: string, data: ServiceOrderForm
         digitalCertificate: data.digitalCertificate || null,
         remoteAccessPhoto: data.remoteAccessPhoto || '',
         remoteAccessCode: data.remoteAccessCode || '',
+        createdBy: data.createdBy || '',
         ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
             email: data.ifoodEmail || '',
             password: data.ifoodPassword || ''

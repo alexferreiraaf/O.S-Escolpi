@@ -7,7 +7,7 @@ import { Button } from "./ui/button";
 import { updateServiceOrderStatus } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, User } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,
@@ -233,6 +233,15 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
                 <p className="text-muted-foreground text-xs italic">Nenhuma informação de acesso remoto fornecida.</p>
             )}
         </div>
+
+        {os.createdBy && (
+          <div className="pt-2 border-t mt-2">
+            <p className="flex items-center gap-2 text-xs">
+              <User className="h-3 w-3 text-muted-foreground" />
+              <span className="text-muted-foreground">O.S. por: {os.createdBy}</span>
+            </p>
+          </div>
+        )}
       </div>
       
       <div className="mt-4 pt-4 border-t flex justify-between items-center os-status-div">

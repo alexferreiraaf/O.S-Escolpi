@@ -20,9 +20,6 @@ import {
   Input,
   RadioGroup,
   RadioGroupItem,
-  Alert,
-  AlertDescription,
-  AlertTitle,
 } from "@/components/ui";
 import type { ServiceOrder, ServiceOrderFormData, DigitalCertificate } from "@/lib/types";
 import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
@@ -46,6 +43,7 @@ const formSchema = z.object({
     digitalCertificate: z.custom<DigitalCertificate>().optional().nullable(),
     remoteAccessPhoto: z.string().optional(),
     remoteAccessCode: z.string().optional(),
+    createdBy: z.string().optional(),
 }).refine(data => {
     if (data.ifoodIntegration === 'Sim') {
         return !!data.ifoodEmail && data.ifoodEmail.length > 0;
@@ -84,6 +82,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
       digitalCertificate: null,
       remoteAccessPhoto: "",
       remoteAccessCode: "",
+      createdBy: "",
     },
   });
   
@@ -107,6 +106,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
         digitalCertificate: editingOs.digitalCertificate || null,
         remoteAccessPhoto: editingOs.remoteAccessPhoto || '',
         remoteAccessCode: editingOs.remoteAccessCode || '',
+        createdBy: editingOs.createdBy || '',
       });
     } else {
         form.reset({
@@ -124,6 +124,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
           digitalCertificate: null,
           remoteAccessPhoto: "",
           remoteAccessCode: "",
+          createdBy: "",
         });
     }
   }, [editingOs, form]);
@@ -404,6 +405,24 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                   )}
               </FormItem>
             )}/>
+
+            <FormField
+              control={form.control}
+              name="createdBy"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>O.S feita por:</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ex: João da Silva"
+                      autoComplete="off"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <div className="flex justify-end gap-2 mt-8">
                 <Button type="button" variant="ghost" onClick={() => {form.reset(); onFinish();}}>Cancelar</Button>
