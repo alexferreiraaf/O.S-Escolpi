@@ -27,6 +27,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
+import { useAuth } from "@/contexts/auth-context";
+
 
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
@@ -43,7 +45,6 @@ const formSchema = z.object({
     digitalCertificate: z.custom<DigitalCertificate>().optional().nullable(),
     remoteAccessPhoto: z.string().optional(),
     remoteAccessCode: z.string().optional(),
-    createdBy: z.string().optional(),
 }).refine(data => {
     if (data.ifoodIntegration === 'Sim') {
         return !!data.ifoodEmail && data.ifoodEmail.length > 0;
@@ -64,8 +65,9 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
   const { toast } = useToast();
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { user } = useAuth();
   
-  const form = useForm<ServiceOrderFormData>({
+  const form = useForm<Omit<ServiceOrderFormData, 'createdBy'>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       clientName: "",
@@ -82,7 +84,6 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
       digitalCertificate: null,
       remoteAccessPhoto: "",
       remoteAccessCode: "",
-      createdBy: "",
     },
   });
   
@@ -106,7 +107,6 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
         digitalCertificate: editingOs.digitalCertificate || null,
         remoteAccessPhoto: editingOs.remoteAccessPhoto || '',
         remoteAccessCode: editingOs.remoteAccessCode || '',
-        createdBy: editingOs.createdBy || '',
       });
     } else {
         form.reset({
@@ -124,7 +124,6 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
           digitalCertificate: null,
           remoteAccessPhoto: "",
           remoteAccessCode: "",
-          createdBy: "",
         });
     }
   }, [editingOs, form]);
@@ -173,13 +172,23 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
   }
 
 
-  const onSubmit = async (values: ServiceOrderFormData) => {
+  const onSubmit = async (values: Omit<ServiceOrderFormData, 'createdBy'>) => {
+    if (!user || !user.email) {
+      toast({ variant: "destructive", title: "Erro de Autenticação", description: "Você precisa estar logado para criar uma O.S." });
+      return;
+    }
+
+    const data: ServiceOrderFormData = {
+      ...values,
+      createdBy: user.email
+    }
+
     try {
       if (editingOs) {
-        await updateServiceOrder(editingOs.id, values);
+        await updateServiceOrder(editingOs.id, data);
         toast({ title: "Sucesso!", description: "Ordem de Serviço atualizada." });
       } else {
-        await addServiceOrder(values);
+        await addServiceOrder(data);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
       }
       form.reset();
@@ -405,24 +414,6 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                   )}
               </FormItem>
             )}/>
-
-            <FormField
-              control={form.control}
-              name="createdBy"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>O.S feita por:</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Ex: João da Silva"
-                      autoComplete="off"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             
             <div className="flex justify-end gap-2 mt-8">
                 <Button type="button" variant="ghost" onClick={() => {form.reset(); onFinish();}}>Cancelar</Button>

@@ -1,16 +1,30 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ServiceOrder } from '@/lib/types';
 import ServiceOrderForm from '@/components/service-order-form';
 import ServiceOrderList from '@/components/service-order-list';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { useServiceOrders } from '@/hooks/use-service-orders';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth-context';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { Loader2 } from 'lucide-react';
 
 export default function Home() {
     const [editingOs, setEditingOs] = useState<ServiceOrder | null>(null);
     const { osList, loading } = useServiceOrders();
+    const { user, isAuthReady } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (isAuthReady && !user) {
+            router.push('/login');
+        }
+    }, [user, isAuthReady, router]);
 
     const handleEdit = (os: ServiceOrder) => {
         setEditingOs(os);
@@ -22,11 +36,25 @@ export default function Home() {
         setEditingOs(null);
     };
 
+    const handleLogout = async () => {
+        await signOut(auth);
+        router.push('/login');
+    }
+
+    if (!isAuthReady || !user) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      )
+    }
+
     return (
         <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8 transition-colors duration-300">
             <header className="text-center mb-8 md:mb-12 relative max-w-7xl mx-auto">
-                <div className="absolute top-0 right-0">
+                <div className="absolute top-0 right-0 flex items-center gap-2">
                     <ThemeToggleButton />
+                    <Button variant="ghost" onClick={handleLogout}>Sair</Button>
                 </div>
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-primary leading-tight">
                     Gestão de Ordens de Serviço

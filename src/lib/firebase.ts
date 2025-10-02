@@ -15,32 +15,13 @@ let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 
-// This code will only run on the client side, where window is available.
-if (typeof window !== 'undefined') {
-  if (getApps().length === 0) {
-    const win = window as any;
-    const injectedConfig = win.__firebase_config ? JSON.parse(win.__firebase_config) : firebaseConfig;
-    app = initializeApp(injectedConfig);
-  } else {
-    app = getApp();
-  }
-  auth = getAuth(app);
-  db = getFirestore(app);
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
 }
 
-// @ts-ignore
-export { app, auth, db };
+auth = getAuth(app);
+db = getFirestore(app);
 
-export const getInjectedGlobals = () => {
-    if (typeof window === 'undefined') {
-        return {
-            appId: 'default-app-id',
-            initialAuthToken: null,
-        };
-    }
-    const win = window as any;
-    return {
-        appId: win.__app_id || 'default-app-id',
-        initialAuthToken: win.__initial_auth_token || null,
-    };
-};
+export { app, auth, db };

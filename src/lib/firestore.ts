@@ -1,13 +1,8 @@
 import { db } from '@/lib/firebase';
 import type { ServiceOrderFormData, ServiceOrderStatus } from '@/lib/types';
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { getInjectedGlobals } from '@/lib/firebase';
 
-const getCollectionPath = () => {
-    const { appId } = getInjectedGlobals();
-    // Using a public path that doesn't depend on a user
-    return `artifacts/${appId}/service_orders`;
-}
+const COLLECTION_PATH = `service_orders`;
 
 export async function addServiceOrder(data: ServiceOrderFormData) {
     const newOrder = {
@@ -32,8 +27,7 @@ export async function addServiceOrder(data: ServiceOrderFormData) {
         status: 'Pendente' as ServiceOrderStatus,
     };
 
-    const path = getCollectionPath();
-    return await addDoc(collection(db, path), newOrder);
+    return await addDoc(collection(db, COLLECTION_PATH), newOrder);
 }
 
 export async function updateServiceOrder(orderId: string, data: ServiceOrderFormData) {
@@ -57,13 +51,11 @@ export async function updateServiceOrder(orderId: string, data: ServiceOrderForm
         } : null,
     };
     
-    const path = getCollectionPath();
-    const docRef = doc(db, path, orderId);
+    const docRef = doc(db, COLLECTION_PATH, orderId);
     return await updateDoc(docRef, orderUpdate);
 }
 
 export async function updateServiceOrderStatus(orderId: string, status: ServiceOrderStatus) {
-    const path = getCollectionPath();
-    const docRef = doc(db, path, orderId);
+    const docRef = doc(db, COLLECTION_PATH, orderId);
     return await updateDoc(docRef, { status });
 }

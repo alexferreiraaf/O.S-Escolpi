@@ -1,8 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, signInWithCustomToken, User } from 'firebase/auth';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { getInjectedGlobals } from '@/lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -10,19 +9,26 @@ interface AuthContextType {
   isAuthReady: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, userId: 'public-user', isAuthReady: true });
+const AuthContext = createContext<AuthContextType>({ user: null, userId: null, isAuthReady: false });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    // Since we are moving away from auth, we can simplify this.
-    // We'll just set it to ready.
-    setIsAuthReady(true);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setIsAuthReady(true);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const value = { user: null, userId: 'public-user', isAuthReady: true };
+  const value = { 
+    user,
+    userId: user?.uid || null,
+    isAuthReady 
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
