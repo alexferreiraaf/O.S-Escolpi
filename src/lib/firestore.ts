@@ -9,7 +9,7 @@ const getCollectionPath = () => {
     return `artifacts/${appId}/service_orders`;
 }
 
-export async function addServiceOrder(userId: string, data: ServiceOrderFormData) {
+export async function addServiceOrder(data: ServiceOrderFormData) {
     const newOrder = {
         clientName: data.clientName,
         pedidoAgora: data.pedidoAgora,
@@ -29,7 +29,7 @@ export async function addServiceOrder(userId: string, data: ServiceOrderFormData
     return await addDoc(collection(db, path), newOrder);
 }
 
-export async function updateServiceOrder(userId: string, orderId: string, data: ServiceOrderFormData) {
+export async function updateServiceOrder(orderId: string, data: ServiceOrderFormData) {
     const orderUpdate = {
         clientName: data.clientName,
         pedidoAgora: data.pedidoAgora,
@@ -48,7 +48,7 @@ export async function updateServiceOrder(userId: string, orderId: string, data: 
     return await updateDoc(docRef, orderUpdate);
 }
 
-export async function updateServiceOrderStatus(userId: string, orderId: string, status: ServiceOrderStatus) {
+export async function updateServiceOrderStatus(orderId: string, status: ServiceOrderStatus) {
     const path = getCollectionPath();
     const docRef = doc(db, path, orderId);
     return await updateDoc(docRef, { status });
