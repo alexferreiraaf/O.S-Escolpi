@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +28,7 @@ import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
+import { CameraCapture } from "./camera-capture";
 
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
@@ -43,6 +43,7 @@ const formSchema = z.object({
     ifoodPassword: z.string().optional(),
     dll: z.string().optional(),
     digitalCertificate: z.any().optional(),
+    remoteAccessPhoto: z.string().optional(),
 }).refine(data => {
     if (data.ifoodIntegration === 'Sim') {
         return !!data.ifoodEmail && data.ifoodEmail.length > 0;
@@ -78,6 +79,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
       ifoodPassword: "",
       dll: "",
       digitalCertificate: "",
+      remoteAccessPhoto: "",
     },
   });
   
@@ -98,6 +100,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
         ifoodPassword: editingOs.ifoodCredentials?.password || '',
         dll: editingOs.dll,
         digitalCertificate: editingOs.digitalCertificate,
+        remoteAccessPhoto: editingOs.remoteAccessPhoto || '',
       });
     } else {
         form.reset({
@@ -113,26 +116,27 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
           ifoodPassword: "",
           dll: "",
           digitalCertificate: "",
+          remoteAccessPhoto: "",
         });
     }
   }, [editingOs, form]);
 
   const generateDllSuggestion = async () => {
     const clientName = form.getValues('clientName');
-    if (clientName) {
-        setIsSuggestingDll(true);
-        try {
-            const result = await suggestDllName({ clientName });
-            if (result.suggestedDllName) {
-                form.setValue('dll', result.suggestedDllName);
-                toast({ title: "Sugestão de DLL gerada!", description: `A DLL sugerida foi: ${result.suggestedDllName}` });
-            }
-        } catch (e) {
-            console.error("DLL suggestion failed:", e);
-            toast({ variant: 'destructive', title: "Erro na IA", description: "Não foi possível gerar sugestão de DLL." });
-        } finally {
-            setIsSuggestingDll(false);
+    if (!clientName) return;
+
+    setIsSuggestingDll(true);
+    try {
+        const result = await suggestDllName({ clientName });
+        if (result.suggestedDllName) {
+            form.setValue('dll', result.suggestedDllName);
+            toast({ title: "Sugestão de DLL gerada!", description: `A DLL sugerida foi: ${result.suggestedDllName}` });
         }
+    } catch (e) {
+        console.error("DLL suggestion failed:", e);
+        toast({ variant: 'destructive', title: "Erro na IA", description: "Não foi possível gerar sugestão de DLL." });
+    } finally {
+        setIsSuggestingDll(false);
     }
   };
 
@@ -313,6 +317,20 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                 </FormItem>
               )}/>
 
+             <FormField
+                control={form.control}
+                name="remoteAccessPhoto"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Foto para Acesso Remoto</FormLabel>
+                    <FormControl>
+                       <CameraCapture value={field.value} onChange={field.onChange} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
             <FormField control={form.control} name="digitalCertificate" render={({ field: { onChange, value, ...rest } }) => (
               <FormItem>
                   <FormLabel>Certificado Digital (Arquivo .pfx)</FormLabel>
@@ -333,16 +351,14 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                           O arquivo é selecionado, mas apenas o nome do arquivo é armazenado.
                       </AlertDescription>
                   </Alert>
-                  <FormMessage />
               </FormItem>
             )}/>
-
-            <div className="flex flex-col sm:flex-row gap-2">
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {editingOs ? "Atualizar Ordem" : "Salvar Ordem"}
+            
+            <div className="flex justify-end gap-2 mt-8">
+                <Button type="button" variant="ghost" onClick={() => {form.reset(); onFinish();}}>Cancelar</Button>
+                <Button type="submit" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : (editingOs ? 'Salvar Alterações' : 'Criar OS')}
                 </Button>
-                {editingOs && <Button type="button" variant="outline" className="w-full" onClick={() => onFinish()}>Cancelar Edição</Button>}
             </div>
           </form>
         </Form>
@@ -350,3 +366,5 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
     </Card>
   );
 }
+
+    

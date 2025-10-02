@@ -18,6 +18,7 @@ export interface ServiceOrder {
   } | null;
   dll: string;
   digitalCertificate: string;
+  remoteAccessPhoto?: string;
   createdAt: Timestamp;
   status: ServiceOrderStatus;
 }
@@ -35,4 +36,5 @@ export type ServiceOrderFormData = {
   ifoodPassword?: string;
   dll?: string;
   digitalCertificate?: any;
+  remoteAccessPhoto?: string;
 };
