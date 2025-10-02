@@ -34,6 +34,8 @@ const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
     cpfCnpj: z.string().optional(),
     contact: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
     pedidoAgora: z.enum(['Sim', 'Não']),
     mobile: z.enum(['Sim', 'Não']),
     ifoodIntegration: z.enum(['Sim', 'Não']),
@@ -67,6 +69,8 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
       clientName: "",
       cpfCnpj: "",
       contact: "",
+      city: "",
+      state: "",
       pedidoAgora: "Não",
       mobile: "Não",
       ifoodIntegration: "Não",
@@ -85,6 +89,8 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
         clientName: editingOs.clientName,
         cpfCnpj: editingOs.cpfCnpj || '',
         contact: editingOs.contact || '',
+        city: editingOs.city || '',
+        state: editingOs.state || '',
         pedidoAgora: editingOs.pedidoAgora,
         mobile: editingOs.mobile,
         ifoodIntegration: editingOs.ifoodIntegration,
@@ -98,6 +104,8 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
           clientName: "",
           cpfCnpj: "",
           contact: "",
+          city: "",
+          state: "",
           pedidoAgora: "Não",
           mobile: "Não",
           ifoodIntegration: "Não",
@@ -208,30 +216,65 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
               )}
             />
 
-            <div className="space-y-4">
-               <FormField control={form.control} name="pedidoAgora" render={({ field }) => (
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="city"
+                render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Pedido Agora</FormLabel>
+                    <FormLabel>Cidade</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
-                      </RadioGroup>
+                      <Input
+                        {...field}
+                        placeholder="Ex: São Paulo"
+                        autoComplete="off"
+                      />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
-                )}/>
-                <FormField control={form.control} name="mobile" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mobile</FormLabel>
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
-                          <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
-                          <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                    </FormItem>
-                  )}/>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="state"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Estado</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Ex: SP"
+                        autoComplete="off"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
+            
+            <FormField control={form.control} name="pedidoAgora" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Pedido Agora</FormLabel>
+                <FormControl>
+                  <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
+                    <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
+                  </RadioGroup>
+                </FormControl>
+              </FormItem>
+            )}/>
+            <FormField control={form.control} name="mobile" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Mobile</FormLabel>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
+                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
+                      <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                </FormItem>
+              )}/>
 
             <FormField control={form.control} name="ifoodIntegration" render={({ field }) => (
                 <FormItem className="space-y-3">

@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { updateServiceOrderStatus } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin } from "lucide-react";
 
 interface ServiceOrderItemProps {
   os: ServiceOrder;
@@ -58,6 +58,14 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
           <p className="flex items-center gap-2">
             <Phone className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">{os.contact}</span>
+          </p>
+        )}
+        {(os.city || os.state) && (
+          <p className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              {os.city}{os.city && os.state ? ', ' : ''}{os.state}
+            </span>
           </p>
         )}
         <p><strong>Pedido Agora:</strong> <span className={cn(os.pedidoAgora === 'Sim' ? 'text-green-500 font-semibold' : 'text-muted-foreground')}>{os.pedidoAgora}</span></p>
