@@ -1,12 +1,13 @@
 
 "use client";
 
+import { useRef } from "react";
 import type { ServiceOrder, ServiceOrderStatus } from "@/lib/types";
 import { Button } from "./ui/button";
 import { updateServiceOrderStatus } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,
@@ -15,6 +16,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 interface ServiceOrderItemProps {
   os: ServiceOrder;
@@ -23,6 +26,7 @@ interface ServiceOrderItemProps {
 
 export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
   const { toast } = useToast();
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const handleStatusUpdate = async (status: ServiceOrderStatus) => {
     try {
@@ -32,6 +36,63 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
       console.error(e);
       toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar o status." });
     }
+  };
+
+  const handleDownloadPdf = () => {
+    const input = cardRef.current;
+    if (!input) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao gerar PDF",
+        description: "Não foi possível encontrar o conteúdo para o PDF.",
+      });
+      return;
+    }
+  
+    // Hide buttons before taking the screenshot
+    const buttons = input.querySelectorAll('button');
+    buttons.forEach(btn => btn.style.visibility = 'hidden');
+    const statusDiv = input.querySelector<HTMLElement>('.os-status-div');
+    if (statusDiv) statusDiv.style.visibility = 'hidden';
+
+
+    html2canvas(input, {
+      scale: 2, // Higher scale for better quality
+      useCORS: true,
+      onclone: (document) => {
+        // This is a workaround for images not rendering in html2canvas
+        // by re-appending them in the cloned document.
+        const image = document.querySelector('img');
+        if (image) {
+            const newImage = image.cloneNode(true) as HTMLImageElement;
+            image.parentNode?.replaceChild(newImage, image);
+        }
+      }
+    }).then((canvas) => {
+      // Show buttons again after taking the screenshot
+      buttons.forEach(btn => btn.style.visibility = 'visible');
+      if (statusDiv) statusDiv.style.visibility = 'visible';
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`OS_${os.clientName.replace(/\s+/g, '_')}_${os.id}.pdf`);
+    }).catch(err => {
+      // Ensure buttons are visible even if there's an error
+      buttons.forEach(btn => btn.style.visibility = 'visible');
+      if (statusDiv) statusDiv.style.visibility = 'visible';
+      console.error("Could not generate PDF", err);
+      toast({
+        variant: "destructive",
+        title: "Erro ao gerar PDF",
+        description: "Ocorreu um problema ao tentar criar o arquivo PDF.",
+      });
+    });
   };
   
   const statusConfig = {
@@ -50,15 +111,20 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
   };
 
   return (
-    <div className="p-4 bg-card-foreground/5 dark:bg-card-foreground/[.02] border rounded-lg shadow-sm transition-all hover:shadow-md">
+    <div ref={cardRef} className="p-4 bg-card-foreground/5 dark:bg-card-foreground/[.02] border rounded-lg shadow-sm transition-all hover:shadow-md">
       <div className="flex justify-between items-start mb-3 border-b pb-3">
         <div>
           <h3 className="text-xl font-bold text-primary">{os.clientName}</h3>
           <p className="text-sm text-muted-foreground">{os.cpfCnpj || 'CPF/CNPJ não informado'}</p>
         </div>
-        <span className="text-xs text-muted-foreground">
-          {os.createdAt?.toDate ? os.createdAt.toDate().toLocaleDateString('pt-BR') : 'Sem Data'}
-        </span>
+        <div className="text-right">
+            <span className="text-xs text-muted-foreground">
+            {os.createdAt?.toDate ? os.createdAt.toDate().toLocaleDateString('pt-BR') : 'Sem Data'}
+            </span>
+            <Button onClick={handleDownloadPdf} variant="ghost" size="icon" title="Baixar como PDF" className="mt-1">
+                <FileDown className="w-4 h-4" />
+            </Button>
+        </div>
       </div>
 
       <div className="text-sm space-y-2 text-foreground">
@@ -92,10 +158,10 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
         <p className="flex items-center gap-2">
             <strong>Certificado:</strong> 
             {os.digitalCertificate ? (
-                <Button variant="link" size="sm" className="h-auto p-0 text-accent" onClick={() => alert(`Simulação de download para: ${os.digitalCertificate}`)}>
-                    <Download className="h-4 w-4 mr-1" />
+                <span className="text-muted-foreground flex items-center gap-1">
+                    <Download className="h-4 w-4" />
                     {os.digitalCertificate}
-                </Button>
+                </span>
             ) : (
                 <span className="text-muted-foreground">N/A</span>
             )}
@@ -130,7 +196,7 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
         </div>
       </div>
       
-      <div className="mt-4 pt-4 border-t flex justify-between items-center">
+      <div className="mt-4 pt-4 border-t flex justify-between items-center os-status-div">
         <div className="flex items-center font-semibold text-sm">
             Status: 
             <span className={cn('flex items-center ml-2', statusConfig[os.status]?.color || 'text-muted-foreground')}>
