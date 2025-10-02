@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, signInWithCustomToken, User } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously, signInWithCustomToken, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { getInjectedGlobals } from '@/lib/firebase';
 
@@ -29,6 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { initialAuthToken } = getInjectedGlobals();
           if (initialAuthToken) {
             await signInWithCustomToken(auth, initialAuthToken);
+          } else {
+            // If no token is injected, sign in anonymously.
+            await signInAnonymously(auth);
           }
         } catch (error) {
           console.error("Authentication error:", error);
