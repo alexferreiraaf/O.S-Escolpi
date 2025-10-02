@@ -14,7 +14,7 @@ export default function ServiceOrderList({ osList, onEdit, loading }: ServiceOrd
 
   return (
     <>
-      <h2 className="text-3xl font-extrabold text-center mb-6">
+      <h2 className="text-2xl sm:text-3xl font-extrabold text-center mb-6">
         Ordens de Serviço ({osList.length})
       </h2>
       
@@ -38,7 +38,7 @@ export default function ServiceOrderList({ osList, onEdit, loading }: ServiceOrd
             Nenhuma ordem de serviço encontrada. Crie uma nova!
         </p>
       ) : (
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 -mr-2">
+        <div className="space-y-4 max-h-[80vh] sm:max-h-[75vh] overflow-y-auto pr-2 -mr-2">
           {osList.map((os) => (
             <ServiceOrderItem key={os.id} os={os} onEdit={onEdit} />
           ))}

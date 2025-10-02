@@ -169,13 +169,13 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
   };
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle className="text-3xl font-extrabold text-center">
+        <CardTitle className="text-2xl sm:text-3xl font-extrabold text-center">
           {editingOs ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
         </CardTitle>
-        <CardDescription className="text-center">
-            {isAuthReady && userId ? `ID do Usuário: ${userId}` : 'Carregando autenticação...'}
+        <CardDescription className="text-center text-xs sm:text-sm">
+            {isAuthReady && userId ? `ID do Usuário: ${userId.substring(0,10)}...` : 'Carregando autenticação...'}
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -23,19 +23,19 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-background p-4 sm:p-8 transition-colors duration-300">
-            <header className="text-center mb-10 relative max-w-7xl mx-auto">
+        <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8 transition-colors duration-300">
+            <header className="text-center mb-8 md:mb-12 relative max-w-7xl mx-auto">
                 <div className="absolute top-0 right-0">
                     <ThemeToggleButton />
                 </div>
-                <h1 className="text-4xl md:text-5xl font-black text-primary leading-tight">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-primary leading-tight">
                     Gestão de Ordens de Serviço
                 </h1>
-                <p className="text-muted-foreground mt-2">Escolpi Informática (Powered by Firebase)</p>
+                <p className="text-muted-foreground mt-2 text-sm sm:text-base">Escolpi Informática (Powered by Firebase)</p>
             </header>
 
-            <main className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
-                <div id="service-order-form">
+            <main className="flex flex-col xl:flex-row gap-8 max-w-7xl mx-auto">
+                <div id="service-order-form" className="w-full xl:w-1/3 xl:max-w-md">
                     <ServiceOrderForm
                         key={editingOs?.id ?? 'new'}
                         editingOs={editingOs}
@@ -43,15 +43,17 @@ export default function Home() {
                         existingOrders={osList}
                     />
                 </div>
-                <Card>
-                    <CardContent className="p-6">
-                        <ServiceOrderList 
-                          osList={osList} 
-                          onEdit={handleEdit} 
-                          loading={loading}
-                        />
-                    </CardContent>
-                </Card>
+                <div className="flex-1">
+                  <Card>
+                      <CardContent className="p-4 sm:p-6">
+                          <ServiceOrderList 
+                            osList={osList} 
+                            onEdit={handleEdit} 
+                            loading={loading}
+                          />
+                      </CardContent>
+                  </Card>
+                </div>
             </main>
         </div>
     );
