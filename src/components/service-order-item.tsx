@@ -236,9 +236,11 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
 
         {os.createdBy && (
           <div className="pt-2 border-t mt-2">
-            <p className="flex items-center gap-2 text-xs">
-              <User className="h-3 w-3 text-muted-foreground" />
-              <span className="text-muted-foreground">O.S. por: {os.createdBy}</span>
+            <p className="flex items-center gap-2 text-sm">
+              <User className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">
+                <span className="font-semibold text-foreground">Responsável:</span> {os.createdBy}
+              </span>
             </p>
           </div>
         )}
