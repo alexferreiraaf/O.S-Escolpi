@@ -14,7 +14,6 @@ export interface ServiceOrder {
   } | null;
   dll: string;
   digitalCertificate: string;
-  userId: string;
   createdAt: Timestamp;
   status: ServiceOrderStatus;
 }

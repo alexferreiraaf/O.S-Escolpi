@@ -30,6 +30,7 @@ import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
+import { suggestClientName } from "@/ai/flows/suggest-client-name";
 
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
@@ -118,7 +119,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
 
   const onSubmit = async (values: ServiceOrderFormData) => {
     if (!userId) {
-      toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado." });
+      toast({ variant: "destructive", title: "Erro", description: "Não foi possível identificar o caminho para salvar os dados." });
       return;
     }
     
@@ -145,7 +146,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
           {editingOs ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
         </CardTitle>
         <CardDescription className="text-center text-xs sm:text-sm">
-            {isAuthReady && userId ? `ID do Usuário: ${userId.substring(0,10)}...` : 'Carregando autenticação...'}
+          {isAuthReady ? 'Pronto para salvar.' : 'Carregando...'}
         </CardDescription>
       </CardHeader>
       <CardContent>
