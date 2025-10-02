@@ -1,0 +1,22 @@
+{
+  "theme_color": "#8a74e4",
+  "background_color": "#e3e3f3",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/",
+  "name": "Service Order Central",
+  "short_name": "SO Central",
+  "description": "Gest\u00e3o de Ordens de Servi\u00e7o - Escolpi Inform\u00e1tica",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
