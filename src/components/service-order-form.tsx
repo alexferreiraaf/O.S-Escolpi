@@ -1,9 +1,10 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Card,
@@ -23,14 +24,22 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
+  Command,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandEmpty,
+  Popover,
+  PopoverTrigger,
+  PopoverContent
 } from "@/components/ui";
 import type { ServiceOrder, ServiceOrderFormData } from "@/lib/types";
-import { useAuth } from "@/contexts/auth-context";
 import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { suggestClientName } from "@/ai/flows/suggest-client-name";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
@@ -58,11 +67,13 @@ interface ServiceOrderFormProps {
 }
 
 export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }: ServiceOrderFormProps) {
-  const { userId, isAuthReady } = useAuth();
   const { toast } = useToast();
   const [dllSuggestion, setDllSuggestion] = useState<string>('');
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
-  
+  const [clientNameSuggestions, setClientNameSuggestions] = useState<string[]>([]);
+  const [isSuggestingClientName, setIsSuggestingClientName] = useState(false);
+  const [isClientNamePopoverOpen, setIsClientNamePopoverOpen] = useState(false);
+
   const form = useForm<ServiceOrderFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,6 +87,37 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
       digitalCertificate: "",
     },
   });
+  
+  const clientNameValue = form.watch('clientName');
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (clientNameValue && clientNameValue.length > 2) {
+        setIsSuggestingClientName(true);
+        try {
+          const existingClientNames = existingOrders.map(o => o.clientName);
+          const result = await suggestClientName({ partialClientName: clientNameValue, existingClientNames });
+          setClientNameSuggestions(result.suggestions);
+          if (result.suggestions.length > 0) {
+            setIsClientNamePopoverOpen(true);
+          }
+        } catch (error) {
+          console.error("Failed to fetch client name suggestions:", error);
+        } finally {
+          setIsSuggestingClientName(false);
+        }
+      } else {
+        setClientNameSuggestions([]);
+        setIsClientNamePopoverOpen(false);
+      }
+    };
+
+    const debounce = setTimeout(() => {
+        fetchSuggestions();
+    }, 300);
+
+    return () => clearTimeout(debounce);
+  }, [clientNameValue, existingOrders]);
 
   const ifoodIntegrationValue = form.watch("ifoodIntegration");
 
@@ -92,7 +134,16 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
         digitalCertificate: editingOs.digitalCertificate,
       });
     } else {
-        form.reset();
+        form.reset({
+          clientName: "",
+          pedidoAgora: "Não",
+          mobile: "Não",
+          ifoodIntegration: "Não",
+          ifoodEmail: "",
+          ifoodPassword: "",
+          dll: "",
+          digitalCertificate: "",
+        });
     }
   }, [editingOs, form]);
 
@@ -118,17 +169,12 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
 
 
   const onSubmit = async (values: ServiceOrderFormData) => {
-    if (!userId) {
-      toast({ variant: "destructive", title: "Erro", description: "Não foi possível identificar o caminho para salvar os dados." });
-      return;
-    }
-    
     try {
       if (editingOs) {
-        await updateServiceOrder(userId, editingOs.id, values);
+        await updateServiceOrder(editingOs.id, values);
         toast({ title: "Sucesso!", description: "Ordem de Serviço atualizada." });
       } else {
-        await addServiceOrder(userId, values);
+        await addServiceOrder(values);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
       }
       form.reset();
@@ -145,9 +191,6 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
         <CardTitle className="text-2xl sm:text-3xl font-extrabold text-center">
           {editingOs ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}
         </CardTitle>
-        <CardDescription className="text-center text-xs sm:text-sm">
-          {isAuthReady ? 'Pronto para salvar.' : 'Carregando...'}
-        </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -158,13 +201,39 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nome do Cliente <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Ex: Pastelaria do Zé"
-                      autoComplete="off"
-                    />
-                  </FormControl>
+                   <Popover open={isClientNamePopoverOpen} onOpenChange={setIsClientNamePopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Ex: Pastelaria do Zé"
+                          autoComplete="off"
+                          role="combobox"
+                          aria-expanded={isClientNamePopoverOpen}
+                        />
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                      <Command>
+                         <CommandList>
+                          {isSuggestingClientName && <CommandEmpty>Buscando...</CommandEmpty>}
+                          {!isSuggestingClientName && clientNameSuggestions.length === 0 && clientNameValue.length > 2 && <CommandEmpty>Nenhuma sugestão encontrada.</CommandEmpty>}
+                          {clientNameSuggestions.map((suggestion) => (
+                            <CommandItem
+                              key={suggestion}
+                              value={suggestion}
+                              onSelect={(currentValue) => {
+                                form.setValue("clientName", currentValue);
+                                setIsClientNamePopoverOpen(false);
+                              }}
+                            >
+                              {suggestion}
+                            </CommandItem>
+                          ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}
@@ -175,7 +244,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
                   <FormItem className="space-y-3">
                     <FormLabel>Pedido Agora</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                      <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
                       </RadioGroup>
@@ -186,7 +255,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
                   <FormItem className="space-y-3">
                     <FormLabel>Mobile</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                      <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
                         <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
                       </RadioGroup>
@@ -199,7 +268,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
                 <FormItem className="space-y-3">
                   <FormLabel>Integração com Ifood?</FormLabel>
                   <FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
                       <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
                       <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
                     </RadioGroup>
@@ -214,7 +283,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
                     <FormItem><FormLabel>Email do Portal iFood</FormLabel><FormControl><Input {...field} placeholder="email@ifood.com.br" type="email" /></FormControl><FormMessage /></FormItem>
                   )}/>
                 <FormField control={form.control} name="ifoodPassword" render={({ field }) => (
-                    <FormItem><FormLabel>Senha do Portal iFood</FormLabel><FormControl><Input {...field} placeholder="••••••••" type="password" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Senha do Portal iFood</FormLabel><FormControl><Input {...field} placeholder="••••••••" type="text" /></FormControl><FormMessage /></FormItem>
                   )}/>
               </div>
             )}
@@ -257,7 +326,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
             )}/>
 
             <div className="flex flex-col sm:flex-row gap-2">
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || !isAuthReady}>
+                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
                   {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {editingOs ? "Atualizar Ordem" : "Salvar Ordem"}
                 </Button>
@@ -269,3 +338,5 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
     </Card>
   );
 }
+
+    

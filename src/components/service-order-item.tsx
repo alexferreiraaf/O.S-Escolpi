@@ -1,8 +1,8 @@
+
 "use client";
 
 import type { ServiceOrder, ServiceOrderStatus } from "@/lib/types";
 import { Button } from "./ui/button";
-import { useAuth } from "@/contexts/auth-context";
 import { updateServiceOrderStatus } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -14,13 +14,11 @@ interface ServiceOrderItemProps {
 }
 
 export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
-  const { userId } = useAuth();
   const { toast } = useToast();
 
   const handleStatusUpdate = async (status: ServiceOrderStatus) => {
-    if (!userId) return;
     try {
-      await updateServiceOrderStatus(userId, os.id, status);
+      await updateServiceOrderStatus(os.id, status);
       toast({ title: "Status Atualizado", description: `Ordem de serviço movida para "${status}".` });
     } catch (e) {
       console.error(e);
@@ -60,7 +58,7 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
         {os.ifoodIntegration === 'Sim' && os.ifoodCredentials && (
             <div className="pl-4 pt-1 text-destructive/80 border-l-2 border-destructive/50">
                 <p className="font-medium">Email: {os.ifoodCredentials.email}</p>
-                <p className="font-mono">Senha: {os.ifoodCredentials.password ? '••••••••' : 'N/A'}</p>
+                <p className="font-mono">Senha: {os.ifoodCredentials.password || 'N/A'}</p>
             </div>
         )}
 
@@ -109,3 +107,5 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
     </div>
   );
 }
+
+    
