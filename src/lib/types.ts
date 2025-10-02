@@ -5,6 +5,7 @@ export type ServiceOrderStatus = 'Pendente' | 'Em Processo' | 'Trello';
 export interface ServiceOrder {
   id: string;
   clientName: string;
+  cpfCnpj: string;
   pedidoAgora: 'Sim' | 'Não';
   mobile: 'Sim' | 'Não';
   ifoodIntegration: 'Sim' | 'Não';
@@ -20,6 +21,7 @@ export interface ServiceOrder {
 
 export type ServiceOrderFormData = {
   clientName: string;
+  cpfCnpj?: string;
   pedidoAgora: 'Sim' | 'Não';
   mobile: 'Sim' | 'Não';
   ifoodIntegration: 'Sim' | 'Não';

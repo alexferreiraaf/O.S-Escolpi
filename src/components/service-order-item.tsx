@@ -44,7 +44,10 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
   return (
     <div className="p-4 bg-card-foreground/5 dark:bg-card-foreground/[.02] border rounded-lg shadow-sm transition-all hover:shadow-md">
       <div className="flex justify-between items-start mb-3 border-b pb-3">
-        <h3 className="text-xl font-bold text-primary">{os.clientName}</h3>
+        <div>
+          <h3 className="text-xl font-bold text-primary">{os.clientName}</h3>
+          <p className="text-sm text-muted-foreground">{os.cpfCnpj || 'CPF/CNPJ não informado'}</p>
+        </div>
         <span className="text-xs text-muted-foreground">
           {os.createdAt?.toDate ? os.createdAt.toDate().toLocaleDateString('pt-BR') : 'Sem Data'}
         </span>

@@ -29,10 +29,10 @@ import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
-import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
+    cpfCnpj: z.string().optional(),
     pedidoAgora: z.enum(['Sim', 'Não']),
     mobile: z.enum(['Sim', 'Não']),
     ifoodIntegration: z.enum(['Sim', 'Não']),
@@ -64,6 +64,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
     resolver: zodResolver(formSchema),
     defaultValues: {
       clientName: "",
+      cpfCnpj: "",
       pedidoAgora: "Não",
       mobile: "Não",
       ifoodIntegration: "Não",
@@ -80,6 +81,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
     if (editingOs) {
       form.reset({
         clientName: editingOs.clientName,
+        cpfCnpj: editingOs.cpfCnpj || '',
         pedidoAgora: editingOs.pedidoAgora,
         mobile: editingOs.mobile,
         ifoodIntegration: editingOs.ifoodIntegration,
@@ -91,6 +93,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
     } else {
         form.reset({
           clientName: "",
+          cpfCnpj: "",
           pedidoAgora: "Não",
           mobile: "Não",
           ifoodIntegration: "Não",
@@ -166,9 +169,25 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                 </FormItem>
               )}
             />
-
-            <div className="space-y-6">
-              <FormField control={form.control} name="pedidoAgora" render={({ field }) => (
+            <FormField
+              control={form.control}
+              name="cpfCnpj"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CPF/CNPJ</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="00.000.000/0000-00"
+                      autoComplete="off"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="space-y-4">
+               <FormField control={form.control} name="pedidoAgora" render={({ field }) => (
                   <FormItem className="space-y-3">
                     <FormLabel>Pedido Agora</FormLabel>
                     <FormControl>
@@ -179,17 +198,17 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                     </FormControl>
                   </FormItem>
                 )}/>
-              <FormField control={form.control} name="mobile" render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>Mobile</FormLabel>
-                    <FormControl>
-                      <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
-                        <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                  </FormItem>
-                )}/>
+                <FormField control={form.control} name="mobile" render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>Mobile</FormLabel>
+                      <FormControl>
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
+                          <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Sim" /></FormControl><FormLabel className="font-normal">Sim</FormLabel></FormItem>
+                          <FormItem className="flex items-center space-x-2"><FormControl><RadioGroupItem value="Não" /></FormControl><FormLabel className="font-normal">Não</FormLabel></FormItem>
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}/>
             </div>
 
             <FormField control={form.control} name="ifoodIntegration" render={({ field }) => (

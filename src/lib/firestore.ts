@@ -12,6 +12,7 @@ const getCollectionPath = () => {
 export async function addServiceOrder(data: ServiceOrderFormData) {
     const newOrder = {
         clientName: data.clientName,
+        cpfCnpj: data.cpfCnpj || '',
         pedidoAgora: data.pedidoAgora,
         mobile: data.mobile,
         ifoodIntegration: data.ifoodIntegration,
@@ -32,6 +33,7 @@ export async function addServiceOrder(data: ServiceOrderFormData) {
 export async function updateServiceOrder(orderId: string, data: ServiceOrderFormData) {
     const orderUpdate = {
         clientName: data.clientName,
+        cpfCnpj: data.cpfCnpj || '',
         pedidoAgora: data.pedidoAgora,
         mobile: data.mobile,
         ifoodIntegration: data.ifoodIntegration,
