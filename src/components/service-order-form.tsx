@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   Button,
   Card,
@@ -71,6 +71,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
   const { toast } = useToast();
   const [clientNameSuggestions, setClientNameSuggestions] = useState<string[]>([]);
   const [isSuggestingClientName, setIsSuggestingClientName] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [dllSuggestion, setDllSuggestion] = useState<string>('');
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   
@@ -107,19 +108,24 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
     }
   }, [editingOs, form]);
 
-  const handleClientNameChange = async (name: string) => {
+  const handleClientNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const name = e.target.value;
     form.setValue('clientName', name);
+
     if (name.length > 2) {
-      setIsSuggestingClientName(true);
-      const existingClientNames = existingOrders.map(o => o.clientName);
-      try {
-        const result = await suggestClientName({ partialClientName: name, existingClientNames });
-        setClientNameSuggestions(result.suggestions || []);
-      } catch (e) {
-        console.error("AI suggestion failed:", e);
-      } finally {
-        setIsSuggestingClientName(false);
-      }
+      startTransition(async () => {
+        setIsSuggestingClientName(true);
+        const existingClientNames = existingOrders.map(o => o.clientName);
+        try {
+          const result = await suggestClientName({ partialClientName: name, existingClientNames });
+          setClientNameSuggestions(result.suggestions || []);
+        } catch (e) {
+          console.error("AI suggestion failed:", e);
+          setClientNameSuggestions([]);
+        } finally {
+          setIsSuggestingClientName(false);
+        }
+      });
     } else {
       setClientNameSuggestions([]);
     }
@@ -193,7 +199,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
                         <Input
                           {...field}
                           placeholder="Ex: Pastelaria do Zé"
-                          onChange={(e) => handleClientNameChange(e.target.value)}
+                          onChange={handleClientNameChange}
                           autoComplete="off"
                         />
                       </FormControl>
