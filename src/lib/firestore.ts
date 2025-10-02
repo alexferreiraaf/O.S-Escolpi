@@ -20,7 +20,7 @@ export async function addServiceOrder(data: ServiceOrderFormData) {
         mobile: data.mobile,
         ifoodIntegration: data.ifoodIntegration,
         dll: data.dll || '',
-        digitalCertificate: data.digitalCertificate || '',
+        digitalCertificate: data.digitalCertificate || null,
         remoteAccessPhoto: data.remoteAccessPhoto || '',
         remoteAccessCode: data.remoteAccessCode || '',
         ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
@@ -46,7 +46,7 @@ export async function updateServiceOrder(orderId: string, data: ServiceOrderForm
         mobile: data.mobile,
         ifoodIntegration: data.ifoodIntegration,
         dll: data.dll || '',
-        digitalCertificate: data.digitalCertificate || '',
+        digitalCertificate: data.digitalCertificate || null,
         remoteAccessPhoto: data.remoteAccessPhoto || '',
         remoteAccessCode: data.remoteAccessCode || '',
         ifoodCredentials: data.ifoodIntegration === 'Sim' ? {

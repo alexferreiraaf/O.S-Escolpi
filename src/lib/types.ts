@@ -2,6 +2,11 @@ import type { Timestamp } from 'firebase/firestore';
 
 export type ServiceOrderStatus = 'Pendente' | 'Em Processo' | 'Trello';
 
+export interface DigitalCertificate {
+  fileName: string;
+  fileContent: string; // Base64 encoded content
+}
+
 export interface ServiceOrder {
   id: string;
   clientName: string;
@@ -17,7 +22,7 @@ export interface ServiceOrder {
     password?: string;
   } | null;
   dll: string;
-  digitalCertificate: string;
+  digitalCertificate?: DigitalCertificate | null;
   remoteAccessPhoto?: string;
   remoteAccessCode?: string;
   createdAt: Timestamp;
@@ -36,7 +41,7 @@ export type ServiceOrderFormData = {
   ifoodEmail?: string;
   ifoodPassword?: string;
   dll?: string;
-  digitalCertificate?: any;
+  digitalCertificate?: DigitalCertificate | null;
   remoteAccessPhoto?: string;
   remoteAccessCode?: string;
 };

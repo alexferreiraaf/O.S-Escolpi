@@ -38,6 +38,36 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
     }
   };
 
+  const handleDownloadCertificate = () => {
+    if (!os.digitalCertificate) return;
+
+    const { fileName, fileContent } = os.digitalCertificate;
+    try {
+      const byteCharacters = atob(fileContent);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/x-pkcs12' });
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading certificate:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro no Download",
+        description: "Não foi possível decodificar ou baixar o arquivo do certificado.",
+      });
+    }
+  };
+
+
   const handleDownloadPdf = () => {
     const input = cardRef.current;
     if (!input) {
@@ -156,16 +186,25 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
         <p><strong>DLL:</strong> <span className="text-muted-foreground">{os.dll || 'N/A'}</span></p>
         
         <p className="flex items-center gap-2">
-            <strong>Certificado:</strong> 
-            {os.digitalCertificate ? (
-                <span className="text-muted-foreground flex items-center gap-1">
-                    <Download className="h-4 w-4" />
-                    {os.digitalCertificate}
-                </span>
-            ) : (
-                <span className="text-muted-foreground">N/A</span>
-            )}
+          <strong>Certificado:</strong>
+          {os.digitalCertificate ? (
+            <span className="text-muted-foreground flex items-center gap-2">
+              <span className="italic truncate">{os.digitalCertificate.fileName}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleDownloadCertificate}
+                title={`Baixar ${os.digitalCertificate.fileName}`}
+                className="h-7 w-7"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">N/A</span>
+          )}
         </p>
+
         
         <div className="space-y-2 pt-2 border-t mt-2">
             <h4 className="font-bold text-primary flex items-center gap-2"><Monitor className="h-4 w-4" /> Acesso Remoto</h4>

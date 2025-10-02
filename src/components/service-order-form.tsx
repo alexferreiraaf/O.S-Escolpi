@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -23,10 +24,10 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui";
-import type { ServiceOrder, ServiceOrderFormData } from "@/lib/types";
+import type { ServiceOrder, ServiceOrderFormData, DigitalCertificate } from "@/lib/types";
 import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
 
@@ -42,7 +43,7 @@ const formSchema = z.object({
     ifoodEmail: z.string().email({ message: "Email inválido." }).optional().or(z.literal('')),
     ifoodPassword: z.string().optional(),
     dll: z.string().optional(),
-    digitalCertificate: z.any().optional(),
+    digitalCertificate: z.custom<DigitalCertificate>().optional().nullable(),
     remoteAccessPhoto: z.string().optional(),
     remoteAccessCode: z.string().optional(),
 }).refine(data => {
@@ -64,6 +65,7 @@ interface ServiceOrderFormProps {
 export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFormProps) {
   const { toast } = useToast();
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const form = useForm<ServiceOrderFormData>({
     resolver: zodResolver(formSchema),
@@ -79,13 +81,14 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
       ifoodEmail: "",
       ifoodPassword: "",
       dll: "",
-      digitalCertificate: "",
+      digitalCertificate: null,
       remoteAccessPhoto: "",
       remoteAccessCode: "",
     },
   });
   
   const ifoodIntegrationValue = form.watch("ifoodIntegration");
+  const digitalCertificateValue = form.watch("digitalCertificate");
 
   useEffect(() => {
     if (editingOs) {
@@ -101,7 +104,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
         ifoodEmail: editingOs.ifoodCredentials?.email || '',
         ifoodPassword: editingOs.ifoodCredentials?.password || '',
         dll: editingOs.dll,
-        digitalCertificate: editingOs.digitalCertificate,
+        digitalCertificate: editingOs.digitalCertificate || null,
         remoteAccessPhoto: editingOs.remoteAccessPhoto || '',
         remoteAccessCode: editingOs.remoteAccessCode || '',
       });
@@ -118,7 +121,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
           ifoodEmail: "",
           ifoodPassword: "",
           dll: "",
-          digitalCertificate: "",
+          digitalCertificate: null,
           remoteAccessPhoto: "",
           remoteAccessCode: "",
         });
@@ -143,6 +146,30 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
         setIsSuggestingDll(false);
     }
   };
+
+  const handleCertificateFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const fileContent = (e.target?.result as string).split(',')[1]; // Get Base64 content
+        if (fileContent) {
+          form.setValue('digitalCertificate', {
+            fileName: file.name,
+            fileContent: fileContent,
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const removeCertificate = () => {
+    form.setValue('digitalCertificate', null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
+  }
 
 
   const onSubmit = async (values: ServiceOrderFormData) => {
@@ -353,26 +380,28 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
               )}
             />
 
-            <FormField control={form.control} name="digitalCertificate" render={({ field: { onChange, value, ...rest } }) => (
+            <FormField control={form.control} name="digitalCertificate" render={({ field }) => (
               <FormItem>
                   <FormLabel>Certificado Digital (Arquivo .pfx)</FormLabel>
-                  <FormControl>
-                      <Input 
-                          {...rest}
-                          id="digitalCertificateFile" 
-                          type="file" 
-                          accept=".pfx"
-                          onChange={(e) => onChange(e.target.files?.[0]?.name || '')}
-                          className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                      />
-                  </FormControl>
-                  {value && <p className="text-sm text-muted-foreground italic mt-2">Arquivo: {value}</p>}
-                  <Alert variant="default" className="mt-2">
-                      <AlertTitle className="text-sm font-bold text-destructive">Atenção</AlertTitle>
-                      <AlertDescription className="text-xs">
-                          O arquivo é selecionado, mas apenas o nome do arquivo é armazenado.
-                      </AlertDescription>
-                  </Alert>
+                  {digitalCertificateValue ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted p-2 rounded-md">
+                        <span className="flex-1 truncate italic">{digitalCertificateValue.fileName}</span>
+                        <Button type="button" variant="ghost" size="icon" onClick={removeCertificate} className="h-6 w-6">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                  ) : (
+                    <FormControl>
+                        <Input 
+                            id="digitalCertificateFile" 
+                            type="file" 
+                            accept=".pfx"
+                            ref={fileInputRef}
+                            onChange={handleCertificateFileChange}
+                            className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                        />
+                    </FormControl>
+                  )}
               </FormItem>
             )}/>
             
