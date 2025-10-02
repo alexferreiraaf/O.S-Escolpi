@@ -105,20 +105,20 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
 
   const generateDllSuggestion = async () => {
     const clientName = form.getValues('clientName');
-    if(clientName) {
-      setIsSuggestingDll(true);
-      try {
-        const result = await suggestDllName({ clientName });
-        if(result.suggestedDllName) {
-          form.setValue('dll', result.suggestedDllName);
-          toast({ title: "Sugestão de DLL gerada!", description: `A DLL sugerida foi: ${result.suggestedDllName}` });
+    if (clientName) {
+        setIsSuggestingDll(true);
+        try {
+            const result = await suggestDllName({ clientName });
+            if (result.suggestedDllName) {
+                form.setValue('dll', result.suggestedDllName);
+                toast({ title: "Sugestão de DLL gerada!", description: `A DLL sugerida foi: ${result.suggestedDllName}` });
+            }
+        } catch (e) {
+            console.error("DLL suggestion failed:", e);
+            toast({ variant: 'destructive', title: "Erro na IA", description: "Não foi possível gerar sugestão de DLL." });
+        } finally {
+            setIsSuggestingDll(false);
         }
-      } catch (e) {
-        console.error("DLL suggestion failed:", e);
-        toast({ variant: 'destructive', title: "Erro na IA", description: "Não foi possível gerar sugestão de DLL." });
-      } finally {
-        setIsSuggestingDll(false);
-      }
     }
   };
 
@@ -248,7 +248,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                       <AlertTitle className="text-sm font-bold text-destructive">Atenção</AlertTitle>
                       <AlertDescription className="text-xs">
                           O arquivo é selecionado, mas apenas o nome do arquivo é armazenado.
-                      </AlerteDescription>
+                      </AlertDescription>
                   </Alert>
                   <FormMessage />
               </FormItem>
@@ -267,3 +267,5 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
     </Card>
   );
 }
+
+    
