@@ -44,6 +44,7 @@ const formSchema = z.object({
     dll: z.string().optional(),
     digitalCertificate: z.any().optional(),
     remoteAccessPhoto: z.string().optional(),
+    remoteAccessCode: z.string().optional(),
 }).refine(data => {
     if (data.ifoodIntegration === 'Sim') {
         return !!data.ifoodEmail && data.ifoodEmail.length > 0;
@@ -80,6 +81,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
       dll: "",
       digitalCertificate: "",
       remoteAccessPhoto: "",
+      remoteAccessCode: "",
     },
   });
   
@@ -101,6 +103,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
         dll: editingOs.dll,
         digitalCertificate: editingOs.digitalCertificate,
         remoteAccessPhoto: editingOs.remoteAccessPhoto || '',
+        remoteAccessCode: editingOs.remoteAccessCode || '',
       });
     } else {
         form.reset({
@@ -117,6 +120,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
           dll: "",
           digitalCertificate: "",
           remoteAccessPhoto: "",
+          remoteAccessCode: "",
         });
     }
   }, [editingOs, form]);
@@ -330,6 +334,24 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                   </FormItem>
                 )}
               />
+            
+            <FormField
+              control={form.control}
+              name="remoteAccessCode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Código AnyDesk/TeamViewer</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ex: 123 456 789"
+                      autoComplete="off"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField control={form.control} name="digitalCertificate" render={({ field: { onChange, value, ...rest } }) => (
               <FormItem>
@@ -366,5 +388,3 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
     </Card>
   );
 }
-
-    

@@ -6,7 +6,15 @@ import { Button } from "./ui/button";
 import { updateServiceOrderStatus } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor } from "lucide-react";
+import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from './ui/dialog';
 
 interface ServiceOrderItemProps {
   os: ServiceOrder;
@@ -92,6 +100,34 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
                 <span className="text-muted-foreground">N/A</span>
             )}
         </p>
+        
+        <div className="space-y-2 pt-2 border-t mt-2">
+            <h4 className="font-bold text-primary flex items-center gap-2"><Monitor className="h-4 w-4" /> Acesso Remoto</h4>
+            {os.remoteAccessCode && (
+                 <p className="flex items-center gap-2">
+                    <KeyRound className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-mono text-muted-foreground">{os.remoteAccessCode}</span>
+                </p>
+            )}
+            {os.remoteAccessPhoto && (
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">Ver Foto</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>Foto de Acesso Remoto</DialogTitle>
+                        </DialogHeader>
+                        <div className="mt-4">
+                            <Image src={os.remoteAccessPhoto} alt="Acesso Remoto" width={800} height={600} style={{ objectFit: 'contain', width: '100%', height: 'auto' }} className="rounded-md border" />
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
+            {!os.remoteAccessCode && !os.remoteAccessPhoto && (
+                <p className="text-muted-foreground text-xs italic">Nenhuma informação de acesso remoto fornecida.</p>
+            )}
+        </div>
       </div>
       
       <div className="mt-4 pt-4 border-t flex justify-between items-center">

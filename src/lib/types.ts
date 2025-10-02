@@ -19,6 +19,7 @@ export interface ServiceOrder {
   dll: string;
   digitalCertificate: string;
   remoteAccessPhoto?: string;
+  remoteAccessCode?: string;
   createdAt: Timestamp;
   status: ServiceOrderStatus;
 }
@@ -37,4 +38,5 @@ export type ServiceOrderFormData = {
   dll?: string;
   digitalCertificate?: any;
   remoteAccessPhoto?: string;
+  remoteAccessCode?: string;
 };
