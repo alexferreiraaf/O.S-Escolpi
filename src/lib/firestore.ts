@@ -13,6 +13,7 @@ export async function addServiceOrder(data: ServiceOrderFormData) {
     const newOrder = {
         clientName: data.clientName,
         cpfCnpj: data.cpfCnpj || '',
+        contact: data.contact || '',
         pedidoAgora: data.pedidoAgora,
         mobile: data.mobile,
         ifoodIntegration: data.ifoodIntegration,
@@ -34,6 +35,7 @@ export async function updateServiceOrder(orderId: string, data: ServiceOrderForm
     const orderUpdate = {
         clientName: data.clientName,
         cpfCnpj: data.cpfCnpj || '',
+        contact: data.contact || '',
         pedidoAgora: data.pedidoAgora,
         mobile: data.mobile,
         ifoodIntegration: data.ifoodIntegration,

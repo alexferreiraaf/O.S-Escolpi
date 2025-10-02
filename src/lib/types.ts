@@ -6,6 +6,7 @@ export interface ServiceOrder {
   id: string;
   clientName: string;
   cpfCnpj: string;
+  contact: string;
   pedidoAgora: 'Sim' | 'Não';
   mobile: 'Sim' | 'Não';
   ifoodIntegration: 'Sim' | 'Não';
@@ -22,6 +23,7 @@ export interface ServiceOrder {
 export type ServiceOrderFormData = {
   clientName: string;
   cpfCnpj?: string;
+  contact?: string;
   pedidoAgora: 'Sim' | 'Não';
   mobile: 'Sim' | 'Não';
   ifoodIntegration: 'Sim' | 'Não';

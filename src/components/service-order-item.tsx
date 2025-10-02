@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { updateServiceOrderStatus } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone } from "lucide-react";
 
 interface ServiceOrderItemProps {
   os: ServiceOrder;
@@ -54,6 +54,12 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
       </div>
 
       <div className="text-sm space-y-2 text-foreground">
+        {os.contact && (
+          <p className="flex items-center gap-2">
+            <Phone className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">{os.contact}</span>
+          </p>
+        )}
         <p><strong>Pedido Agora:</strong> <span className={cn(os.pedidoAgora === 'Sim' ? 'text-green-500 font-semibold' : 'text-muted-foreground')}>{os.pedidoAgora}</span></p>
         <p><strong>Mobile:</strong> <span className={cn(os.mobile === 'Sim' ? 'text-accent font-semibold' : 'text-muted-foreground')}>{os.mobile || 'Não'}</span></p>
         <p><strong>Integração Ifood:</strong> <span className={cn(os.ifoodIntegration === 'Sim' ? 'text-destructive font-semibold' : 'text-muted-foreground')}>{os.ifoodIntegration}</span></p>
@@ -110,5 +116,3 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
     </div>
   );
 }
-
-    

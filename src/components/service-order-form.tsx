@@ -33,6 +33,7 @@ import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
     cpfCnpj: z.string().optional(),
+    contact: z.string().optional(),
     pedidoAgora: z.enum(['Sim', 'Não']),
     mobile: z.enum(['Sim', 'Não']),
     ifoodIntegration: z.enum(['Sim', 'Não']),
@@ -65,6 +66,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
     defaultValues: {
       clientName: "",
       cpfCnpj: "",
+      contact: "",
       pedidoAgora: "Não",
       mobile: "Não",
       ifoodIntegration: "Não",
@@ -82,6 +84,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
       form.reset({
         clientName: editingOs.clientName,
         cpfCnpj: editingOs.cpfCnpj || '',
+        contact: editingOs.contact || '',
         pedidoAgora: editingOs.pedidoAgora,
         mobile: editingOs.mobile,
         ifoodIntegration: editingOs.ifoodIntegration,
@@ -94,6 +97,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
         form.reset({
           clientName: "",
           cpfCnpj: "",
+          contact: "",
           pedidoAgora: "Não",
           mobile: "Não",
           ifoodIntegration: "Não",
@@ -186,9 +190,27 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="contact"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contato do Cliente</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="(99) 99999-9999"
+                      autoComplete="off"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="space-y-4">
                <FormField control={form.control} name="pedidoAgora" render={({ field }) => (
-                  <FormItem className="space-y-3">
+                  <FormItem>
                     <FormLabel>Pedido Agora</FormLabel>
                     <FormControl>
                       <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
@@ -199,7 +221,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
                   </FormItem>
                 )}/>
                 <FormField control={form.control} name="mobile" render={({ field }) => (
-                    <FormItem className="space-y-3">
+                    <FormItem>
                       <FormLabel>Mobile</FormLabel>
                       <FormControl>
                         <RadioGroup onValueChange={field.onChange} value={field.value} className="flex space-x-4">
