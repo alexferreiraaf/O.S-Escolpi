@@ -24,21 +24,12 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-  Command,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandEmpty,
-  Popover,
-  PopoverTrigger,
-  PopoverContent
 } from "@/components/ui";
 import type { ServiceOrder, ServiceOrderFormData } from "@/lib/types";
 import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
-import { suggestClientName } from "@/ai/flows/suggest-client-name";
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
@@ -66,14 +57,10 @@ interface ServiceOrderFormProps {
   existingOrders: ServiceOrder[];
 }
 
-export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }: ServiceOrderFormProps) {
+export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFormProps) {
   const { toast } = useToast();
-  const [dllSuggestion, setDllSuggestion] = useState<string>('');
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
-  const [clientNameSuggestions, setClientNameSuggestions] = useState<string[]>([]);
-  const [isSuggestingClientName, setIsSuggestingClientName] = useState(false);
-  const [isClientNamePopoverOpen, setIsClientNamePopoverOpen] = useState(false);
-
+  
   const form = useForm<ServiceOrderFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -88,37 +75,6 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
     },
   });
   
-  const clientNameValue = form.watch('clientName');
-
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      if (clientNameValue && clientNameValue.length > 2) {
-        setIsSuggestingClientName(true);
-        try {
-          const existingClientNames = existingOrders.map(o => o.clientName);
-          const result = await suggestClientName({ partialClientName: clientNameValue, existingClientNames });
-          setClientNameSuggestions(result.suggestions);
-          if (result.suggestions.length > 0) {
-            setIsClientNamePopoverOpen(true);
-          }
-        } catch (error) {
-          console.error("Failed to fetch client name suggestions:", error);
-        } finally {
-          setIsSuggestingClientName(false);
-        }
-      } else {
-        setClientNameSuggestions([]);
-        setIsClientNamePopoverOpen(false);
-      }
-    };
-
-    const debounce = setTimeout(() => {
-        fetchSuggestions();
-    }, 300);
-
-    return () => clearTimeout(debounce);
-  }, [clientNameValue, existingOrders]);
-
   const ifoodIntegrationValue = form.watch("ifoodIntegration");
 
   useEffect(() => {
@@ -154,7 +110,6 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
       try {
         const result = await suggestDllName({ clientName });
         if(result.suggestedDllName) {
-          setDllSuggestion(result.suggestedDllName);
           form.setValue('dll', result.suggestedDllName);
           toast({ title: "Sugestão de DLL gerada!", description: `A DLL sugerida foi: ${result.suggestedDllName}` });
         }
@@ -201,39 +156,13 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nome do Cliente <span className="text-destructive">*</span></FormLabel>
-                   <Popover open={isClientNamePopoverOpen} onOpenChange={setIsClientNamePopoverOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Ex: Pastelaria do Zé"
-                          autoComplete="off"
-                          role="combobox"
-                          aria-expanded={isClientNamePopoverOpen}
-                        />
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                      <Command>
-                         <CommandList>
-                          {isSuggestingClientName && <CommandEmpty>Buscando...</CommandEmpty>}
-                          {!isSuggestingClientName && clientNameSuggestions.length === 0 && clientNameValue.length > 2 && <CommandEmpty>Nenhuma sugestão encontrada.</CommandEmpty>}
-                          {clientNameSuggestions.map((suggestion) => (
-                            <CommandItem
-                              key={suggestion}
-                              value={suggestion}
-                              onSelect={(currentValue) => {
-                                form.setValue("clientName", currentValue);
-                                setIsClientNamePopoverOpen(false);
-                              }}
-                            >
-                              {suggestion}
-                            </CommandItem>
-                          ))}
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Ex: Pastelaria do Zé"
+                      autoComplete="off"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -319,7 +248,7 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
                       <AlertTitle className="text-sm font-bold text-destructive">Atenção</AlertTitle>
                       <AlertDescription className="text-xs">
                           O arquivo é selecionado, mas apenas o nome do arquivo é armazenado.
-                      </AlertDescription>
+                      </AlerteDescription>
                   </Alert>
                   <FormMessage />
               </FormItem>
@@ -338,5 +267,3 @@ export default function ServiceOrderForm({ editingOs, onFinish, existingOrders }
     </Card>
   );
 }
-
-    
