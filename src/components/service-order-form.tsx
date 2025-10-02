@@ -9,7 +9,6 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
   Form,
@@ -168,7 +167,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
               )}
             />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-6">
               <FormField control={form.control} name="pedidoAgora" render={({ field }) => (
                   <FormItem className="space-y-3">
                     <FormLabel>Pedido Agora</FormLabel>
@@ -267,5 +266,3 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
     </Card>
   );
 }
-
-    
