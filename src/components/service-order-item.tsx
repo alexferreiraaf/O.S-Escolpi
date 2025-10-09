@@ -18,7 +18,7 @@ import {
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, Timestamp } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -43,6 +43,13 @@ async function updateServiceOrderStatus(orderId: string, status: ServiceOrderSta
     
     const docRef = doc(db, COLLECTION_PATH, orderId);
     return await updateDoc(docRef, { status });
+}
+
+function formatDate(timestamp: Timestamp | undefined | null): string {
+    if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate().toLocaleDateString('pt-BR');
+    }
+    return 'Sem Data';
 }
 
 
@@ -176,7 +183,7 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
         </div>
         <div className="text-right">
             <span className="text-xs text-muted-foreground">
-            {os.createdAt?.toDate ? os.createdAt.toDate().toLocaleDateString('pt-BR') : 'Sem Data'}
+              {formatDate(os.createdAt)}
             </span>
             <Button onClick={handleDownloadPdf} variant="ghost" size="icon" title="Baixar como PDF" className="mt-1">
                 <FileDown className="w-4 h-4" />
