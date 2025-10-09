@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import type { User, Auth } from 'firebase/auth';
+import { getFirebaseAuth } from '@/lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -16,12 +16,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setIsAuthReady(true);
-    });
+    let unsubscribe: () => void;
+    
+    const initializeAuth = async () => {
+      const { onAuthStateChanged } = await import('firebase/auth');
+      const auth = getFirebaseAuth();
+      
+      unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        if (!isAuthReady) {
+          setIsAuthReady(true);
+        }
+      });
+    };
+    
+    initializeAuth();
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value = { 

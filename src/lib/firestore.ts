@@ -1,10 +1,12 @@
-import { db } from '@/lib/firebase';
+import { getFirebaseDb } from '@/lib/firebase';
 import type { ServiceOrderFormData, ServiceOrderStatus } from '@/lib/types';
-import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-
-const COLLECTION_PATH = `service_orders`;
 
 export async function addServiceOrder(data: ServiceOrderFormData) {
+    const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+    const db = getFirebaseDb();
+    
+    const COLLECTION_PATH = `service_orders`;
+
     const newOrder = {
         clientName: data.clientName,
         cpfCnpj: data.cpfCnpj || '',
@@ -31,6 +33,11 @@ export async function addServiceOrder(data: ServiceOrderFormData) {
 }
 
 export async function updateServiceOrder(orderId: string, data: ServiceOrderFormData) {
+    const { doc, updateDoc } = await import('firebase/firestore');
+    const db = getFirebaseDb();
+    
+    const COLLECTION_PATH = `service_orders`;
+
     const orderUpdate = {
         clientName: data.clientName,
         cpfCnpj: data.cpfCnpj || '',
@@ -56,6 +63,11 @@ export async function updateServiceOrder(orderId: string, data: ServiceOrderForm
 }
 
 export async function updateServiceOrderStatus(orderId: string, status: ServiceOrderStatus) {
+    const { doc, updateDoc } = await import('firebase/firestore');
+    const db = getFirebaseDb();
+
+    const COLLECTION_PATH = `service_orders`;
+    
     const docRef = doc(db, COLLECTION_PATH, orderId);
     return await updateDoc(docRef, { status });
 }

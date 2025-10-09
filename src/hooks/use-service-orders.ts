@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, orderBy, where, Firestore } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { getFirebaseDb } from '@/lib/firebase';
 import type { ServiceOrder } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
 
@@ -15,29 +14,40 @@ export function useServiceOrders() {
     useEffect(() => {
         if (!user) {
             setLoading(false);
-            // Don't fetch if user is not logged in.
-            // The page will redirect anyway.
             return;
         };
 
-        const collectionPath = `service_orders`;
-        
-        const q = query(
-            collection(db, collectionPath),
-            orderBy('createdAt', 'desc')
-        );
+        let unsubscribe: () => void;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceOrder));
-            setOsList(orders);
-            setLoading(false);
-        }, (err) => {
-            console.error("Error fetching service orders:", err);
-            setError("Failed to load service orders.");
-            setLoading(false);
-        });
+        const fetchOrders = async () => {
+            const { collection, query, orderBy, onSnapshot } = await import('firebase/firestore');
+            const db = getFirebaseDb();
+            
+            const collectionPath = `service_orders`;
+            
+            const q = query(
+                collection(db, collectionPath),
+                orderBy('createdAt', 'desc')
+            );
 
-        return () => unsubscribe();
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceOrder));
+                setOsList(orders);
+                setLoading(false);
+            }, (err) => {
+                console.error("Error fetching service orders:", err);
+                setError("Failed to load service orders.");
+                setLoading(false);
+            });
+        };
+
+        fetchOrders();
+
+        return () => {
+            if (unsubscribe) {
+                unsubscribe();
+            }
+        };
     }, [user]);
 
     return { osList, loading, error };
