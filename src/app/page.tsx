@@ -10,9 +10,26 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { Loader2 } from 'lucide-react';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, signOut } from 'firebase/auth';
+
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+function getFirebaseApp(): FirebaseApp {
+  if (!getApps().length) {
+    return initializeApp(firebaseConfig);
+  }
+  return getApp();
+}
 
 export default function Home() {
     const [editingOs, setEditingOs] = useState<ServiceOrder | null>(null);
@@ -37,6 +54,8 @@ export default function Home() {
     };
 
     const handleLogout = async () => {
+        const app = getFirebaseApp();
+        const auth = getAuth(app);
         await signOut(auth);
         router.push('/login');
     }

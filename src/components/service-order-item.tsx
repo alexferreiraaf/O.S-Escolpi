@@ -4,7 +4,6 @@
 import { useRef } from "react";
 import type { ServiceOrder, ServiceOrderStatus } from "@/lib/types";
 import { Button } from "./ui/button";
-import { updateServiceOrderStatus } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, User } from "lucide-react";
@@ -18,6 +17,37 @@ import {
 } from './ui/dialog';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore, doc, updateDoc } from 'firebase/firestore';
+
+
+// --- Firebase Logic moved directly into the component ---
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+function getFirebaseApp(): FirebaseApp {
+  if (!getApps().length) {
+    return initializeApp(firebaseConfig);
+  }
+  return getApp();
+}
+
+async function updateServiceOrderStatus(orderId: string, status: ServiceOrderStatus) {
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const COLLECTION_PATH = `service_orders`;
+    
+    const docRef = doc(db, COLLECTION_PATH, orderId);
+    return await updateDoc(docRef, { status });
+}
+
 
 interface ServiceOrderItemProps {
   os: ServiceOrder;
@@ -239,7 +269,7 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
             <p className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">
-                <span className="font-semibold text-foreground">Responsável:</span> {os.createdBy}
+                <span className="font-semibold text-foreground text-base">Responsável:</span> {os.createdBy}
               </span>
             </p>
           </div>

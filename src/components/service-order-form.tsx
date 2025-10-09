@@ -22,13 +22,93 @@ import {
   RadioGroupItem,
 } from "@/components/ui";
 import type { ServiceOrder, ServiceOrderFormData, DigitalCertificate } from "@/lib/types";
-import { addServiceOrder, updateServiceOrder } from "@/lib/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
 import { useAuth } from "@/contexts/auth-context";
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 
+
+// --- Firebase Logic moved directly into the component ---
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+function getFirebaseApp(): FirebaseApp {
+  if (!getApps().length) {
+    return initializeApp(firebaseConfig);
+  }
+  return getApp();
+}
+
+async function addServiceOrder(data: ServiceOrderFormData) {
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const COLLECTION_PATH = `service_orders`;
+
+    const newOrder = {
+        clientName: data.clientName,
+        cpfCnpj: data.cpfCnpj || '',
+        contact: data.contact || '',
+        city: data.city || '',
+        state: data.state || '',
+        pedidoAgora: data.pedidoAgora,
+        mobile: data.mobile,
+        ifoodIntegration: data.ifoodIntegration,
+        dll: data.dll || '',
+        digitalCertificate: data.digitalCertificate || null,
+        remoteAccessPhoto: data.remoteAccessPhoto || '',
+        remoteAccessCode: data.remoteAccessCode || '',
+        createdBy: data.createdBy || '',
+        ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
+            email: data.ifoodEmail || '',
+            password: data.ifoodPassword || ''
+        } : null,
+        createdAt: serverTimestamp(),
+        status: 'Pendente' as const,
+    };
+
+    return await addDoc(collection(db, COLLECTION_PATH), newOrder);
+}
+
+async function updateServiceOrder(orderId: string, data: ServiceOrderFormData) {
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const COLLECTION_PATH = `service_orders`;
+
+    const orderUpdate = {
+        clientName: data.clientName,
+        cpfCnpj: data.cpfCnpj || '',
+        contact: data.contact || '',
+        city: data.city || '',
+        state: data.state || '',
+        pedidoAgora: data.pedidoAgora,
+        mobile: data.mobile,
+        ifoodIntegration: data.ifoodIntegration,
+        dll: data.dll || '',
+        digitalCertificate: data.digitalCertificate || null,
+        remoteAccessPhoto: data.remoteAccessPhoto || '',
+        remoteAccessCode: data.remoteAccessCode || '',
+        createdBy: data.createdBy || '',
+        ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
+            email: data.ifoodEmail || '',
+            password: data.ifoodPassword || ''
+        } : null,
+    };
+    
+    const docRef = doc(db, COLLECTION_PATH, orderId);
+    return await updateDoc(docRef, orderUpdate);
+}
+
+// --- Component Logic ---
 
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
