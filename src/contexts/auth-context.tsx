@@ -54,13 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
-      if (!isAuthReady) {
-        setIsAuthReady(true);
-      }
+      setIsAuthReady(true);
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = (email: string, pass: string) => {

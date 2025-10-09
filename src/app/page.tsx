@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -24,7 +24,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { user, isAuthReady, login } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -33,12 +33,19 @@ export default function LoginPage() {
       password: '',
     },
   });
+  
+  useEffect(() => {
+    if (isAuthReady && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, isAuthReady, router]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
-      router.push('/dashboard');
+      // O useEffect acima irá lidar com o redirecionamento
     } catch (error: any) {
       console.error(error);
       toast({
@@ -50,6 +57,15 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   }
+
+  if (!isAuthReady || user) {
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+    )
+  }
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">

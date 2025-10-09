@@ -22,7 +22,7 @@ export default function DashboardPage() {
 
     useEffect(() => {
         if (isAuthReady && !user) {
-            router.push('/');
+            router.replace('/');
         }
     }, [user, isAuthReady, router]);
 
@@ -38,7 +38,7 @@ export default function DashboardPage() {
 
     const handleLogout = async () => {
         await logout();
-        router.push('/');
+        router.replace('/');
     }
 
     if (!isAuthReady || !user) {
