@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import type { ServiceOrder, ServiceOrderStatus } from "@/lib/types";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, User } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, User, Trash2 } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,
@@ -15,10 +15,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getFirestore, doc, updateDoc, Timestamp } from 'firebase/firestore';
+import { getFirestore, doc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -45,6 +56,16 @@ async function updateServiceOrderStatus(orderId: string, status: ServiceOrderSta
     return await updateDoc(docRef, { status });
 }
 
+async function deleteServiceOrder(orderId: string) {
+    const app = getFirebaseApp();
+    const db = getFirestore(app);
+    const COLLECTION_PATH = `service_orders`;
+
+    const docRef = doc(db, COLLECTION_PATH, orderId);
+    return await deleteDoc(docRef);
+}
+
+
 function formatDate(timestamp: Timestamp | undefined | null): string {
     if (timestamp && typeof timestamp.toDate === 'function') {
         return timestamp.toDate().toLocaleDateString('pt-BR');
@@ -69,6 +90,23 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
     } catch (e) {
       console.error(e);
       toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar o status." });
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteServiceOrder(os.id);
+      toast({
+        title: "Ordem de Serviço Excluída",
+        description: `A O.S. de ${os.clientName} foi removida.`,
+      });
+    } catch (e) {
+      console.error(e);
+      toast({
+        variant: "destructive",
+        title: "Erro ao Excluir",
+        description: "Não foi possível remover a ordem de serviço.",
+      });
     }
   };
 
@@ -305,6 +343,28 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
           <Button onClick={() => handleStatusUpdate('Pendente')} variant="ghost" size="icon" title="Resetar Status" className={cn(os.status === 'Pendente' && 'bg-muted-foreground/10 text-muted-foreground scale-110')}>
             <History className="w-4 h-4" />
           </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" title="Excluir Ordem de Serviço" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                    <Trash2 className="w-4 h-4" />
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                <AlertDialogTitle>Você tem certeza absoluta?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. Isso irá excluir permanentemente a ordem de serviço
+                    de <span className="font-bold">{os.clientName}</span> dos nossos servidores.
+                </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className={cn(buttonVariants({ variant: "destructive" }))}>Continuar</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
         </div>
       </div>
     </div>
