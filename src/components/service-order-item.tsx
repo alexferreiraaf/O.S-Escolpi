@@ -3,7 +3,7 @@
 
 import { useRef, useState } from "react";
 import type { ServiceOrder, ServiceOrderStatus } from "@/lib/types";
-import { Button } from "./ui/button";
+import { Button, buttonVariants } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, User, Trash2 } from "lucide-react";
