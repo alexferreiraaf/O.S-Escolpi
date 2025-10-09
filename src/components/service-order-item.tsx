@@ -20,9 +20,6 @@ import html2canvas from 'html2canvas';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, doc, updateDoc } from 'firebase/firestore';
 
-
-// --- Firebase Logic moved directly into the component ---
-
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,

@@ -30,9 +30,6 @@ import { useAuth } from "@/contexts/auth-context";
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 
-
-// --- Firebase Logic moved directly into the component ---
-
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -107,8 +104,6 @@ async function updateServiceOrder(orderId: string, data: ServiceOrderFormData) {
     const docRef = doc(db, COLLECTION_PATH, orderId);
     return await updateDoc(docRef, orderUpdate);
 }
-
-// --- Component Logic ---
 
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),

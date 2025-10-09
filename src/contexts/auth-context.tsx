@@ -1,9 +1,15 @@
 "use client";
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import type { User } from 'firebase/auth';
+import { 
+  type User, 
+  getAuth, 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut,
+} from 'firebase/auth';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 
-// Helper function to initialize Firebase
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -20,49 +26,65 @@ function getFirebaseApp(): FirebaseApp {
   return getApp();
 }
 
-
 interface AuthContextType {
   user: User | null;
   userId: string | null;
   isAuthReady: boolean;
+  login: (email: string, pass: string) => Promise<any>;
+  signup: (email: string, pass: string) => Promise<any>;
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, userId: null, isAuthReady: false });
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  userId: null, 
+  isAuthReady: false,
+  login: async () => {},
+  signup: async () => {},
+  logout: async () => {},
+});
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    let unsubscribe: () => void;
+    const app = getFirebaseApp();
+    const auth = getAuth(app);
     
-    const initializeAuth = async () => {
-      const { getAuth, onAuthStateChanged } = await import('firebase/auth');
-      const app = getFirebaseApp();
-      const auth = getAuth(app);
-      
-      unsubscribe = onAuthStateChanged(auth, (user) => {
-        setUser(user);
-        if (!isAuthReady) {
-          setIsAuthReady(true);
-        }
-      });
-    };
-    
-    initializeAuth();
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      if (!isAuthReady) {
+        setIsAuthReady(true);
       }
-    };
+    });
+
+    return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const login = (email: string, pass: string) => {
+    const auth = getAuth(getFirebaseApp());
+    return signInWithEmailAndPassword(auth, email, pass);
+  };
+  
+  const signup = (email: string, pass: string) => {
+    const auth = getAuth(getFirebaseApp());
+    return createUserWithEmailAndPassword(auth, email, pass);
+  };
+
+  const logout = () => {
+    const auth = getAuth(getFirebaseApp());
+    return signOut(auth);
+  }
 
   const value = { 
     user,
     userId: user?.uid || null,
-    isAuthReady 
+    isAuthReady,
+    login,
+    signup,
+    logout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

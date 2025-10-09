@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import type { ServiceOrder } from '@/lib/types';
 import { useAuth } from '@/contexts/auth-context';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
-// Helper function to initialize Firebase
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -37,8 +37,7 @@ export function useServiceOrders() {
 
         let unsubscribe: () => void;
 
-        const fetchOrders = async () => {
-            const { getFirestore, collection, query, orderBy, onSnapshot } = await import('firebase/firestore');
+        try {
             const app = getFirebaseApp();
             const db = getFirestore(app);
             
@@ -58,9 +57,11 @@ export function useServiceOrders() {
                 setError("Failed to load service orders.");
                 setLoading(false);
             });
-        };
-
-        fetchOrders();
+        } catch(err) {
+            console.error("Error setting up Firestore listener:", err);
+            setError("Failed to set up listener.");
+            setLoading(false);
+        }
 
         return () => {
             if (unsubscribe) {
