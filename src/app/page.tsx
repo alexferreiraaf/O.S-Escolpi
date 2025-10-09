@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import type { ServiceOrder } from '@/lib/types';
-import ServiceOrderForm from '@/components/service-order-form';
-import ServiceOrderList from '@/components/service-order-list';
-import { ThemeToggleButton } from '@/components/theme-toggle-button';
-import { useServiceOrders } from '@/hooks/use-service-orders';
-import { Card, CardContent } from '@/components/ui/card';
-import { useAuth } from '@/contexts/auth-context';
+import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, signOut } from 'firebase/auth';
-
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -31,77 +32,95 @@ function getFirebaseApp(): FirebaseApp {
   return getApp();
 }
 
-export default function Home() {
-    const [editingOs, setEditingOs] = useState<ServiceOrder | null>(null);
-    const { osList, loading } = useServiceOrders();
-    const { user, isAuthReady } = useAuth();
-    const router = useRouter();
+const formSchema = z.object({
+  email: z.string().email('Email inválido.'),
+  password: z.string().min(1, 'A senha é obrigatória.'),
+});
 
-    useEffect(() => {
-        if (isAuthReady && !user) {
-            router.push('/login');
-        }
-    }, [user, isAuthReady, router]);
+export default function LoginPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-    const handleEdit = (os: ServiceOrder) => {
-        setEditingOs(os);
-        const formElement = document.getElementById('service-order-form');
-        formElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
-    const handleFinish = () => {
-        setEditingOs(null);
-    };
-
-    const handleLogout = async () => {
-        const app = getFirebaseApp();
-        const auth = getAuth(app);
-        await signOut(auth);
-        router.push('/login');
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
+    try {
+      const app = getFirebaseApp();
+      const auth = getAuth(app);
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Falha no Login',
+        description: error.message || 'Ocorreu um erro. Tente novamente.',
+      });
+    } finally {
+      setIsLoading(false);
     }
+  }
 
-    if (!isAuthReady || !user) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+       <div className="absolute top-4 right-4">
+            <ThemeToggleButton />
         </div>
-      )
-    }
-
-    return (
-        <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8 transition-colors duration-300">
-            <header className="text-center mb-8 md:mb-12 relative max-w-7xl mx-auto">
-                <div className="absolute top-0 right-0 flex items-center gap-2">
-                    <ThemeToggleButton />
-                    <Button variant="ghost" onClick={handleLogout}>Sair</Button>
-                </div>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-primary leading-tight">
-                    Gestão de Ordens de Serviço
-                </h1>
-                <p className="text-muted-foreground mt-2 text-sm sm:text-base">Escolpi Informática (Powered by Firebase)</p>
-            </header>
-
-            <main className="flex flex-col xl:flex-row gap-8 max-w-7xl mx-auto">
-                <div id="service-order-form" className="w-full xl:w-1/3 xl:max-w-md">
-                    <ServiceOrderForm
-                        key={editingOs?.id ?? 'new'}
-                        editingOs={editingOs}
-                        onFinish={handleFinish}
-                        existingOrders={osList}
-                    />
-                </div>
-                <div className="flex-1">
-                  <Card>
-                      <CardContent className="p-4 sm:p-6">
-                          <ServiceOrderList 
-                            osList={osList} 
-                            onEdit={handleEdit} 
-                            loading={loading}
-                          />
-                      </CardContent>
-                  </Card>
-                </div>
-            </main>
-        </div>
-    );
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Login</CardTitle>
+          <CardDescription>Acesse sua conta para continuar</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="seu@email.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? <Loader2 className="animate-spin" /> : 'Entrar'}
+              </Button>
+            </form>
+          </Form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Não tem uma conta?{' '}
+            <Link href="/signup" className="font-semibold text-primary hover:underline">
+              Cadastre-se
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
 }

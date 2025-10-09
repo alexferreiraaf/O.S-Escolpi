@@ -61,7 +61,7 @@ export default function SignupPage() {
         title: 'Sucesso!',
         description: 'Sua conta foi criada. Você será redirecionado para o login.',
       });
-      router.push('/login');
+      router.push('/');
     } catch (error: any) {
       console.error(error);
       toast({
@@ -120,7 +120,7 @@ export default function SignupPage() {
           </Form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
             Já tem uma conta?{' '}
-            <Link href="/login" className="font-semibold text-primary hover:underline">
+            <Link href="/" className="font-semibold text-primary hover:underline">
               Faça login
             </Link>
           </p>
