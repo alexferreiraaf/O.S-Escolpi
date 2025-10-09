@@ -45,11 +45,17 @@ export default function SignupPage() {
       });
       router.push('/');
     } catch (error: any) {
-      console.error(error);
+      let description = 'Ocorreu um erro. Tente novamente.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'Este email já está cadastrado. Tente fazer login.';
+      } else {
+        console.error(error);
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Falha no Cadastro',
-        description: error.message || 'Ocorreu um erro. Tente novamente.',
+        description: description,
       });
     } finally {
       setIsLoading(false);

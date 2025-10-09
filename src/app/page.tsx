@@ -47,11 +47,17 @@ export default function LoginPage() {
       await login(values.email, values.password);
       // O useEffect acima irá lidar com o redirecionamento
     } catch (error: any) {
-      console.error(error);
+      let description = 'Ocorreu um erro. Tente novamente.';
+      if (error.code === 'auth/invalid-credential') {
+        description = 'Email ou senha incorretos. Por favor, verifique suas credenciais.';
+      } else {
+        console.error(error);
+      }
+      
       toast({
         variant: 'destructive',
         title: 'Falha no Login',
-        description: error.message || 'Ocorreu um erro. Tente novamente.',
+        description: description,
       });
     } finally {
       setIsLoading(false);
