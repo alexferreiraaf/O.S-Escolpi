@@ -131,12 +131,13 @@ const formSchema = z.object({
 });
 
 interface ServiceOrderFormProps {
+  id: string;
   editingOs: ServiceOrder | null;
   onFinish: () => void;
   existingOrders: ServiceOrder[];
 }
 
-export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFormProps) {
+export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrderFormProps) {
   const { toast } = useToast();
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -275,7 +276,7 @@ export default function ServiceOrderForm({ editingOs, onFinish }: ServiceOrderFo
   };
 
   return (
-    <Card className="w-full">
+    <Card id={id} className="w-full">
       <CardHeader>
         <CardTitle className="text-2xl sm:text-3xl font-extrabold text-center">
           {editingOs ? 'Editar Ordem de Serviço' : 'Nova Ordem de Serviço'}

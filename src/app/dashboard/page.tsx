@@ -12,6 +12,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
+const FORM_ID = 'service-order-form';
+
 export default function DashboardPage() {
     const [editingOs, setEditingOs] = useState<ServiceOrder | null>(null);
     const { osList, loading } = useServiceOrders();
@@ -26,7 +28,7 @@ export default function DashboardPage() {
 
     const handleEdit = (os: ServiceOrder) => {
         setEditingOs(os);
-        const formElement = document.getElementById('service-order-form');
+        const formElement = document.getElementById(FORM_ID);
         formElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
@@ -61,8 +63,9 @@ export default function DashboardPage() {
             </header>
 
             <main className="flex flex-col xl:flex-row gap-8 max-w-7xl mx-auto">
-                <div id="service-order-form" className="w-full xl:w-1/3 xl:max-w-md">
+                <div className="w-full xl:w-1/3 xl:max-w-md">
                     <ServiceOrderForm
+                        id={FORM_ID}
                         key={editingOs?.id ?? 'new'}
                         editingOs={editingOs}
                         onFinish={handleFinish}

@@ -23,9 +23,19 @@ export function CameraCapture({ value, onChange }: CameraCaptureProps) {
   const { toast } = useToast();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isCameraSupported, setIsCameraSupported] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // This code runs only on the client, after the component has mounted.
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      setIsCameraSupported(true);
+    } else {
+      setIsCameraSupported(false);
+    }
+  }, []);
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -35,30 +45,29 @@ export function CameraCapture({ value, onChange }: CameraCaptureProps) {
   }, []);
 
   const startCamera = async () => {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        streamRef.current = stream;
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        setHasPermission(true);
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Câmera não autorizada',
-          description:
-            'Por favor, permita o acesso à câmera nas configurações do seu navegador.',
-        });
-        setHasPermission(false);
-        setIsCameraOpen(false);
-      }
-    } else {
+    if (!isCameraSupported) {
       toast({
         variant: 'destructive',
         title: 'Câmera não suportada',
         description: 'Seu navegador não suporta acesso à câmera.',
+      });
+      return;
+    }
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      setHasPermission(true);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Câmera não autorizada',
+        description:
+          'Por favor, permita o acesso à câmera nas configurações do seu navegador.',
       });
       setHasPermission(false);
       setIsCameraOpen(false);
@@ -77,6 +86,7 @@ export function CameraCapture({ value, onChange }: CameraCaptureProps) {
         onChange(dataUrl);
       }
       setIsCameraOpen(false);
+      stopCamera();
     }
   };
 
@@ -91,12 +101,10 @@ export function CameraCapture({ value, onChange }: CameraCaptureProps) {
     }
   };
 
-  useEffect(() => {
-    // Cleanup: stop camera when the component unmounts or modal closes
-    return () => {
-      stopCamera();
-    };
-  }, [stopCamera]);
+  const handleDialogClose = () => {
+    stopCamera();
+    setIsCameraOpen(false);
+  }
 
   return (
     <div className="space-y-2">
@@ -123,17 +131,21 @@ export function CameraCapture({ value, onChange }: CameraCaptureProps) {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={startCamera}
+              onClick={() => {
+                setIsCameraOpen(true);
+                startCamera();
+              }}
+              disabled={!isCameraSupported}
             >
               <Camera className="mr-2 h-4 w-4" />
               Tirar Foto
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg" onInteractOutside={stopCamera} onEscapeKeyDown={stopCamera}>
+          <DialogContent className="max-w-lg" onPointerDownOutside={handleDialogClose} onEscapeKeyDown={handleDialogClose}>
             <DialogHeader>
               <DialogTitle>Capturar Foto</DialogTitle>
               <DialogClose asChild>
-                 <button onClick={stopCamera} className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                 <button onClick={handleDialogClose} className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
                     <XCircle className="h-4 w-4" />
                     <span className="sr-only">Close</span>
                  </button>
