@@ -33,7 +33,7 @@ import { doc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
 
 
 function formatDate(timestamp: Timestamp | undefined | null): string {
-    if (!timestamp) return 'Sem Data';
+    if (!timestamp) return 'Salvando...';
     try {
         return timestamp.toDate().toLocaleDateString('pt-BR');
     } catch (e) {
@@ -340,3 +340,5 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
     </div>
   );
 }
+
+    

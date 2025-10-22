@@ -25,7 +25,7 @@ export interface ServiceOrder {
   digitalCertificate?: DigitalCertificate | null;
   remoteAccessPhoto?: string;
   remoteAccessCode?: string;
-  createdAt: Timestamp;
+  createdAt: Timestamp | null;
   status: ServiceOrderStatus;
 }
 
@@ -45,3 +45,5 @@ export type ServiceOrderFormData = {
   remoteAccessPhoto?: string;
   remoteAccessCode?: string;
 };
+
+    
