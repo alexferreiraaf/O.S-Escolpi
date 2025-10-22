@@ -1,83 +1,77 @@
 /**
- * @fileOverview Firestore Security Rules for the application.
+ * @fileoverview Firestore Security Rules for the application.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for `service_orders` and `users` collections under an `artifacts/{appId}` scope.
- * Only the authenticated user can access their own data.
+ * This ruleset enforces a strict user-ownership model. Each user has a dedicated data tree under `/artifacts/{appId}/users/{userId}`,
+ * and only the authenticated user with the matching `userId` can access their data.
  *
  * Data Structure:
- * All data is nested under /artifacts/{appId}/users/{userId}. User documents and service orders
- * reside in their respective collections under this path.
+ * - `/artifacts/{appId}/users/{userId}`: Stores user profile data. Only the user can read/write their own profile.
+ * - `/artifacts/{appId}/users/{userId}/service_orders/{serviceOrderId}`: Stores service orders specific to each user. Only the user can manage their own service orders.
  *
  * Key Security Decisions:
- * - Users can only create their own user document.
- * - Users can only read, write, update and delete their own service orders.
- * - Listing service orders is allowed only for the owner of the service orders.
- * - The rules are designed to be authorization independent and QAPs (Rules are not Filters)
+ * - Users can only access their own data. No cross-user data access is allowed.
+ * - Listing of service orders is restricted to the owner.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is authenticated.
-     * @returns {boolean} True if the request is authenticated, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user's UID matches the provided userId.
-     * @param {string} userId The user ID to compare against the authenticated user's UID.
-     * @returns {boolean} True if the user IDs match, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user owns the resource that already exists.
-     * @param {string} userId The user ID to compare against the authenticated user's UID.
-     * @returns {boolean} True if the user IDs match and the resource exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Rules for the user documents.
+     * @description Enforces access control for user profile documents.
      * @path /artifacts/{appId}/users/{userId}
-     * @allow (create) - Authenticated user with matching userId can create their own document.
-     * @allow (get) - Authenticated user with matching userId can read their own document.
-     * @allow (update) - Authenticated user with matching userId can update their own document.
-     * @allow (delete) - Authenticated user with matching userId can delete their own document.
-     * @deny (create) - Authenticated user attempts to create a document with a mismatched userId.
-     * @principle Enforces document ownership for all operations.
+     * @allow (create) - Authenticated user can create their own user document if the userId matches their auth.uid.
+     * @allow (get, update, delete) - Authenticated user can get, update, and delete their own user document if the userId matches their auth.uid and the document exists.
+     * @deny (create) - User cannot create a document with a userId that does not match their auth.uid.
+     * @deny (get, update, delete) - User cannot get, update or delete another user's document.
+     * @principle Enforces document ownership for all operations on user profiles.
      */
     match /artifacts/{appId}/users/{userId} {
-      allow get: if isOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isExistingOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Rules for the service_orders subcollection.
+     * @description Enforces access control for service order documents under a specific user.
      * @path /artifacts/{appId}/users/{userId}/service_orders/{serviceOrderId}
-     * @allow (create) - Authenticated user with matching userId can create a service order under their document.
-     * @allow (get) - Authenticated user with matching userId can read a service order under their document.
-     * @allow (update) - Authenticated user with matching userId can update a service order under their document.
-     * @allow (delete) - Authenticated user with matching userId can delete a service order under their document.
-     * @allow (list) - Authenticated user with matching userId can list service orders under their document.
-     * @deny (create) - Authenticated user attempts to create a service order with a mismatched userId.
+     * @allow (create) - Authenticated user can create a service order under their own user document if the userId in the path matches their auth.uid.
+     * @allow (get, update, delete) - Authenticated user can get, update, and delete their own service order if the userId in the path matches their auth.uid and the document exists.
+     * @allow (list) - Authenticated user can list service orders under their own user document if the userId in the path matches their auth.uid.
+     * @deny (create) - User cannot create a service order under another user's document or with a userId that does not match their auth.uid.
+     * @deny (get, update, delete) - User cannot get, update or delete another user's service order.
      * @principle Enforces document ownership for all operations on service orders.
      */
     match /artifacts/{appId}/users/{userId}/service_orders/{serviceOrderId} {
-      allow get: if isOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      allow get: if isExistingOwner(userId);
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isExistingOwner(userId);
       allow delete: if isExistingOwner(userId);
     }
