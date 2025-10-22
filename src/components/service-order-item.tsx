@@ -1,12 +1,12 @@
 
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import type { ServiceOrder, ServiceOrderStatus } from "@/lib/types";
 import { Button, buttonVariants } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, User, Trash2 } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, Trash2 } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,
@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useAuth } from "@/contexts/auth-context";
+import { db } from "@/lib/firebase";
 import { doc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
 
 
@@ -51,12 +51,9 @@ interface ServiceOrderItemProps {
 export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
   const { toast } = useToast();
   const cardRef = useRef<HTMLDivElement>(null);
-  const { getServices } = useAuth();
-
 
   const handleStatusUpdate = async (status: ServiceOrderStatus) => {
     try {
-      const { db } = getServices();
       if (!db) {
         toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
         return;
@@ -72,7 +69,6 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
 
   const handleDelete = async () => {
     try {
-      const { db } = getServices();
       if (!db) {
         toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
         return;
@@ -288,17 +284,6 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
                 <p className="text-muted-foreground text-xs italic">Nenhuma informação de acesso remoto fornecida.</p>
             )}
         </div>
-
-        {os.createdBy && (
-          <div className="pt-2 border-t mt-2">
-            <p className="flex items-center gap-2 text-sm">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span className="text-muted-foreground">
-                <span className="font-semibold text-foreground text-base">Responsável:</span> {os.createdBy}
-              </span>
-            </p>
-          </div>
-        )}
       </div>
       
       <div className="mt-4 pt-4 border-t flex justify-between items-center os-status-div">

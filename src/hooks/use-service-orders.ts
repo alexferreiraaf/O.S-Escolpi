@@ -2,24 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import type { ServiceOrder } from '@/lib/types';
-import { useAuth } from '@/contexts/auth-context';
+import { db } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 export function useServiceOrders() {
-    const { user, getServices } = useAuth();
     const [osList, setOsList] = useState<ServiceOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!user) {
-            setLoading(false);
-            // Clear list when user logs out
-            setOsList([]);
-            return;
-        };
-
-        const { db } = getServices();
         if (!db) {
             setError("Banco de dados não inicializado.");
             setLoading(false);
@@ -56,7 +47,7 @@ export function useServiceOrders() {
                 unsubscribe();
             }
         };
-    }, [user, getServices]);
+    }, []);
 
     return { osList, loading, error };
 }

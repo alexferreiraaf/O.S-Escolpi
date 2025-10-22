@@ -26,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
-import { useAuth } from "@/contexts/auth-context";
+import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 
 
@@ -66,9 +66,8 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
   const { toast } = useToast();
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const { user, getServices } = useAuth();
   
-  const form = useForm<Omit<ServiceOrderFormData, 'createdBy'>>({
+  const form = useForm<ServiceOrderFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       clientName: "",
@@ -173,21 +172,10 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
   }
 
 
-  const onSubmit = async (values: Omit<ServiceOrderFormData, 'createdBy'>) => {
-    if (!user || !user.email) {
-      toast({ variant: "destructive", title: "Erro de Autenticação", description: "Você precisa estar logado para criar uma O.S." });
-      return;
-    }
-
-    const { db } = getServices();
+  const onSubmit = async (values: ServiceOrderFormData) => {
     if (!db) {
       toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
       return;
-    }
-
-    const data: ServiceOrderFormData = {
-      ...values,
-      createdBy: user.email
     }
 
     try {
@@ -195,22 +183,21 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
 
       if (editingOs) {
         const orderUpdate = {
-            clientName: data.clientName,
-            cpfCnpj: data.cpfCnpj || '',
-            contact: data.contact || '',
-            city: data.city || '',
-            state: data.state || '',
-            pedidoAgora: data.pedidoAgora,
-            mobile: data.mobile,
-            ifoodIntegration: data.ifoodIntegration,
-            dll: data.dll || '',
-            digitalCertificate: data.digitalCertificate || null,
-            remoteAccessPhoto: data.remoteAccessPhoto || '',
-            remoteAccessCode: data.remoteAccessCode || '',
-            createdBy: data.createdBy || '',
-            ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
-                email: data.ifoodEmail || '',
-                password: data.ifoodPassword || ''
+            clientName: values.clientName,
+            cpfCnpj: values.cpfCnpj || '',
+            contact: values.contact || '',
+            city: values.city || '',
+            state: values.state || '',
+            pedidoAgora: values.pedidoAgora,
+            mobile: values.mobile,
+            ifoodIntegration: values.ifoodIntegration,
+            dll: values.dll || '',
+            digitalCertificate: values.digitalCertificate || null,
+            remoteAccessPhoto: values.remoteAccessPhoto || '',
+            remoteAccessCode: values.remoteAccessCode || '',
+            ifoodCredentials: values.ifoodIntegration === 'Sim' ? {
+                email: values.ifoodEmail || '',
+                password: values.ifoodPassword || ''
             } : null,
         };
         const docRef = doc(db, COLLECTION_PATH, editingOs.id);
@@ -218,22 +205,21 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
         toast({ title: "Sucesso!", description: "Ordem de Serviço atualizada." });
       } else {
         const newOrder = {
-            clientName: data.clientName,
-            cpfCnpj: data.cpfCnpj || '',
-            contact: data.contact || '',
-            city: data.city || '',
-            state: data.state || '',
-            pedidoAgora: data.pedidoAgora,
-            mobile: data.mobile,
-            ifoodIntegration: data.ifoodIntegration,
-            dll: data.dll || '',
-            digitalCertificate: data.digitalCertificate || null,
-            remoteAccessPhoto: data.remoteAccessPhoto || '',
-            remoteAccessCode: data.remoteAccessCode || '',
-            createdBy: data.createdBy || '',
-            ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
-                email: data.ifoodEmail || '',
-                password: data.ifoodPassword || ''
+            clientName: values.clientName,
+            cpfCnpj: values.cpfCnpj || '',
+            contact: values.contact || '',
+            city: values.city || '',
+            state: values.state || '',
+            pedidoAgora: values.pedidoAgora,
+            mobile: values.mobile,
+            ifoodIntegration: values.ifoodIntegration,
+            dll: values.dll || '',
+            digitalCertificate: values.digitalCertificate || null,
+            remoteAccessPhoto: values.remoteAccessPhoto || '',
+            remoteAccessCode: values.remoteAccessCode || '',
+            ifoodCredentials: values.ifoodIntegration === 'Sim' ? {
+                email: values.ifoodEmail || '',
+                password: values.ifoodPassword || ''
             } : null,
             createdAt: serverTimestamp(),
             status: 'Pendente' as const,
