@@ -1,0 +1,132 @@
+{
+  "entities": {
+    "ServiceOrder": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ServiceOrder",
+      "type": "object",
+      "description": "Represents a service order with details about the client, services requested, and status.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the service order."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created the service order. (Relationship: User 1:N ServiceOrder)"
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Name of the client for whom the service order is created."
+        },
+        "pedidoAgora": {
+          "type": "string",
+          "description": "Indicates whether the service order is related to 'Pedido Agora'."
+        },
+        "mobile": {
+          "type": "string",
+          "description": "Indicates whether the service order is related to mobile services."
+        },
+        "ifoodIntegration": {
+          "type": "string",
+          "description": "Indicates whether the service order involves integration with iFood."
+        },
+        "ifoodCredentials": {
+          "type": "string",
+          "description": "Email credentials to use for iFood Integration."
+        },
+        "dll": {
+          "type": "string",
+          "description": "Name of the DLL associated with the service order."
+        },
+        "digitalCertificate": {
+          "type": "string",
+          "description": "Filename (reference) of the digital certificate associated with the service order."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the service order was created. Note: should be stored as a string representation of the date-time.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the service order (e.g., Pending, In Process, Trello)."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "clientName"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        }
+      },
+      "required": [
+        "id"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "artifacts/{appId}/users/{userId}/service_orders/{serviceOrderId}",
+        "definition": {
+          "entityName": "ServiceOrder",
+          "schema": {
+            "$ref": "#/backend/entities/ServiceOrder"
+          },
+          "description": "Stores service order data specific to each user, ensuring clear ownership and private data. The userId in the path implicitly defines ownership, ensuring that only the authenticated user can access their own service orders.",
+          "params": [
+            {
+              "name": "appId",
+              "description": "The unique identifier for the application instance."
+            },
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user who owns the service orders."
+            },
+            {
+              "name": "serviceOrderId",
+              "description": "The unique identifier for the service order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "artifacts/{appId}/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user data. Path-based ownership is used.",
+          "params": [
+            {
+              "name": "appId",
+              "description": "The unique identifier for the application instance."
+            },
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The data structure prioritizes authorization independence and QAPs (Rules are not Filters). All service orders are stored as subcollections under each user's document to ensure private data and clear ownership. \n\n**Authorization Independence:** The `service_orders` subcollection is located under the `/users/{userId}` path, which implicitly grants the user full ownership. No denormalization is needed since the path itself defines ownership.\n\n**QAPs Support:** The `service_orders` collection is structured to be specific to each user. This prevents the need to filter by `userId` in rules, as the path inherently restricts access to only the orders belonging to the authenticated user.  The security rules will allow listing of the collection `/users/{userId}/service_orders` without needing to filter on the contents of the documents."
+  }
+}
