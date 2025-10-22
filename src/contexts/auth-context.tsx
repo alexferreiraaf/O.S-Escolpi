@@ -17,15 +17,10 @@ let firebaseApp: FirebaseApp | undefined;
 let firebaseAuth: Auth | undefined;
 let firestoreDb: Firestore | undefined;
 
-// This function now ONLY gets services, it does not initialize them.
-// Initialization is handled in the AuthProvider's useEffect hook.
 function getFirebaseServices() {
-  if (firebaseApp) {
-    return { app: firebaseApp, auth: firebaseAuth, db: firestoreDb };
-  }
-  return { app: undefined, auth: undefined, db: undefined };
+  // This function now just returns the services, it doesn't initialize.
+  return { app: firebaseApp, auth: firebaseAuth, db: firestoreDb };
 }
-
 
 interface AuthContextType {
   user: User | null;
@@ -41,9 +36,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null, 
   userId: null, 
   isAuthReady: false,
-  login: async () => {},
-  signup: async () => {},
-  logout: async () => {},
+  login: async () => { throw new Error("Firebase Auth is not initialized."); },
+  signup: async () => { throw new Error("Firebase Auth is not initialized."); },
+  logout: async () => { throw new Error("Firebase Auth is not initialized."); },
   getServices: getFirebaseServices,
 });
 
@@ -53,33 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     // This effect runs only on the client-side
-    if (!firebaseApp) {
-      // Check if all config keys are present before initializing
-      const isConfigValid = 
-        firebaseConfig.apiKey &&
-        firebaseConfig.authDomain &&
-        firebaseConfig.projectId;
-        
-      if (isConfigValid) {
-        if (getApps().length > 0) {
-          firebaseApp = getApp();
-        } else {
-          firebaseApp = initializeApp(firebaseConfig);
-        }
-        firebaseAuth = getAuth(firebaseApp);
-        firestoreDb = getFirestore(firebaseApp);
-      } else {
-        console.warn("Firebase config is incomplete. Firebase services will not be available. Check your .env.local file or Vercel environment variables.");
-        setIsAuthReady(true); // Mark as ready to unblock UI, but services will fail.
-        return;
-      }
+    if (getApps().length === 0) {
+      firebaseApp = initializeApp(firebaseConfig);
+    } else {
+      firebaseApp = getApp();
     }
-
-    if (!firebaseAuth) {
-        console.warn("Firebase Auth is not initialized. Check your Firebase config.");
-        setIsAuthReady(true);
-        return;
-    }
+    firebaseAuth = getAuth(firebaseApp);
+    firestoreDb = getFirestore(firebaseApp);
 
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       setUser(user);
