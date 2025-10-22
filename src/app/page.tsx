@@ -7,6 +7,7 @@ import ServiceOrderList from '@/components/service-order-list';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { useServiceOrders } from '@/hooks/use-service-orders';
 import { Card, CardContent } from '@/components/ui/card';
+import Logo from '@/components/logo';
 
 const FORM_ID = 'service-order-form';
 
@@ -30,9 +31,12 @@ export default function HomePage() {
                 <div className="absolute top-0 right-0 flex items-center gap-2">
                     <ThemeToggleButton />
                 </div>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-primary leading-tight">
-                    Gestão de Ordens de Serviço
-                </h1>
+                <div className="flex items-center justify-center gap-4">
+                  <Logo className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-primary leading-tight">
+                      Gestão de Ordens de Serviço
+                  </h1>
+                </div>
                 <p className="text-muted-foreground mt-2 text-sm sm:text-base">Escolpi Informática (Powered by Firebase)</p>
             </header>
 
