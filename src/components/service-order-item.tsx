@@ -30,6 +30,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { getDb } from "@/lib/firebase";
 import { doc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
+import { errorEmitter, FirestorePermissionError } from "@/lib/errors";
 
 
 function formatDate(timestamp: Timestamp | undefined | null): string {
@@ -53,41 +54,56 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
   const handleStatusUpdate = async (status: ServiceOrderStatus) => {
+    const db = getDb();
+    if (!db) {
+      toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
+      return;
+    }
+    const docRef = doc(db, 'service_orders', os.id);
     try {
-      const db = getDb();
-      if (!db) {
-        toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
-        return;
-      }
-      const docRef = doc(db, 'service_orders', os.id);
       await updateDoc(docRef, { status });
       toast({ title: "Status Atualizado", description: `Ordem de serviço movida para "${status}".` });
-    } catch (e) {
-      console.error(e);
-      toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar o status." });
+    } catch (e: any) {
+      if (e.code === 'permission-denied') {
+        errorEmitter.emit('permission-error', new FirestorePermissionError(
+          'update',
+          docRef,
+          { status }
+        ));
+      } else {
+        console.error(e);
+        toast({ variant: "destructive", title: "Erro", description: "Não foi possível atualizar o status." });
+      }
     }
   };
 
   const handleDelete = async () => {
+    const db = getDb();
+    if (!db) {
+      toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
+      return;
+    }
+    const docRef = doc(db, 'service_orders', os.id);
     try {
-      const db = getDb();
-      if (!db) {
-        toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
-        return;
-      }
-      const docRef = doc(db, 'service_orders', os.id);
       await deleteDoc(docRef);
       toast({
         title: "Ordem de Serviço Excluída",
         description: `A O.S. de ${os.clientName} foi removida.`,
       });
-    } catch (e) {
-      console.error(e);
-      toast({
-        variant: "destructive",
-        title: "Erro ao Excluir",
-        description: "Não foi possível remover a ordem de serviço.",
-      });
+    } catch (e: any) {
+      if (e.code === 'permission-denied') {
+        errorEmitter.emit('permission-error', new FirestorePermissionError(
+          'delete',
+          docRef
+        ));
+      } else {
+        console.error(e);
+        toast({
+          variant: "destructive",
+          title: "Erro ao Excluir",
+          description: "Não foi possível remover a ordem de serviço.",
+        });
+      }
     }
   };
 

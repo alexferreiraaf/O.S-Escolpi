@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import type { ServiceOrder } from '@/lib/types';
 import { getDb } from "@/lib/firebase";
-import { collection, query, orderBy, onSnapshot, type Firestore } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, type Firestore, type CollectionReference } from 'firebase/firestore';
+import { errorEmitter, FirestorePermissionError } from '@/lib/errors';
+
 
 export function useServiceOrders() {
     const [osList, setOsList] = useState<ServiceOrder[]>([]);
@@ -20,9 +22,10 @@ export function useServiceOrders() {
         }
 
         const collectionPath = `service_orders`;
+        const ordersCollection = collection(db, collectionPath) as CollectionReference;
         
         const q = query(
-            collection(db, collectionPath),
+            ordersCollection,
             orderBy('createdAt', 'desc')
         );
 
@@ -30,9 +33,16 @@ export function useServiceOrders() {
             const orders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ServiceOrder));
             setOsList(orders);
             setLoading(false);
-        }, (err) => {
-            console.error("Error fetching service orders:", err);
-            setError("Falha ao carregar as ordens de serviço.");
+        }, (err: any) => {
+             if (err.code === 'permission-denied') {
+                errorEmitter.emit('permission-error', new FirestorePermissionError(
+                    'listen',
+                    ordersCollection
+                ));
+            } else {
+                console.error("Error fetching service orders:", err);
+                setError("Falha ao carregar as ordens de serviço.");
+            }
             setLoading(false);
         });
 

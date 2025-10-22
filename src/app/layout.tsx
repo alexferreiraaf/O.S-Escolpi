@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
+import { FirebaseErrorListener } from '@/components/firebase-error-listener';
 
 export const metadata: Metadata = {
   title: 'Service Order Central',
@@ -28,6 +29,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light">
           {children}
           <Toaster />
+          <FirebaseErrorListener />
         </ThemeProvider>
       </body>
     </html>

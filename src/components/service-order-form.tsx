@@ -27,7 +27,8 @@ import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
 import { getDb } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc, type Firestore } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc, type Firestore, type DocumentReference } from 'firebase/firestore';
+import { errorEmitter, FirestorePermissionError } from "@/lib/errors";
 
 
 const formSchema = z.object({
@@ -178,12 +179,17 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
       toast({ variant: "destructive", title: "Erro de Conexão", description: "Não foi possível conectar ao banco de dados." });
       return;
     }
+    const COLLECTION_PATH = `service_orders`;
+    let docRef: DocumentReference;
+    let operation: 'create' | 'update' = 'create';
+    let dataPayload: any;
+
 
     try {
-      const COLLECTION_PATH = `service_orders`;
-
       if (editingOs) {
-        const orderUpdate = {
+        operation = 'update';
+        docRef = doc(db, COLLECTION_PATH, editingOs.id);
+        dataPayload = {
             clientName: values.clientName,
             cpfCnpj: values.cpfCnpj || '',
             contact: values.contact || '',
@@ -201,11 +207,12 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
                 password: values.ifoodPassword || ''
             } : null,
         };
-        const docRef = doc(db, COLLECTION_PATH, editingOs.id);
-        await updateDoc(docRef, orderUpdate);
+        await updateDoc(docRef, dataPayload);
         toast({ title: "Sucesso!", description: "Ordem de Serviço atualizada." });
       } else {
-        const newOrder = {
+        operation = 'create';
+        docRef = doc(collection(db, COLLECTION_PATH));
+        dataPayload = {
             clientName: values.clientName,
             cpfCnpj: values.cpfCnpj || '',
             contact: values.contact || '',
@@ -225,14 +232,22 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
             createdAt: serverTimestamp(),
             status: 'Pendente' as const,
         };
-        await addDoc(collection(db, COLLECTION_PATH), newOrder);
+        await addDoc(collection(db, COLLECTION_PATH), dataPayload);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
       }
       form.reset();
       onFinish();
-    } catch (e) {
-      console.error("Error saving to Firestore:", e);
-      toast({ variant: "destructive", title: "Erro ao Salvar", description: "Falha ao salvar a Ordem de Serviço." });
+    } catch (e: any) {
+       if (e.code === 'permission-denied') {
+        errorEmitter.emit('permission-error', new FirestorePermissionError(
+          operation,
+          docRef,
+          dataPayload
+        ));
+      } else {
+        console.error("Error saving to Firestore:", e);
+        toast({ variant: "destructive", title: "Erro ao Salvar", description: "Falha ao salvar a Ordem de Serviço." });
+      }
     }
   };
 
