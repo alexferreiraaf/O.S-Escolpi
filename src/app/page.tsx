@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ServiceOrder } from '@/lib/types';
 import ServiceOrderForm from '@/components/service-order-form';
 import ServiceOrderList from '@/components/service-order-list';
@@ -10,9 +10,29 @@ import { Card, CardContent } from '@/components/ui/card';
 
 const FORM_ID = 'service-order-form';
 
+// Ref to track if it's the first time the list is loaded
+let isFirstLoad = true;
+
+// A simple in-memory flag to prevent the same device from notifying itself
+let justCreatedId: string | null = null;
+const clearJustCreatedId = () => {
+    if (justCreatedId) {
+        setTimeout(() => {
+            justCreatedId = null;
+        }, 1000);
+    }
+};
+
+const showNotification = (title: string, body: string) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body });
+    }
+}
+
 export default function HomePage() {
     const [editingOs, setEditingOs] = useState<ServiceOrder | null>(null);
     const { osList, loading } = useServiceOrders();
+    const prevOsListLength = useRef<number>(0);
 
     useEffect(() => {
         // Pede permissão para notificações quando o componente é montado.
@@ -21,6 +41,30 @@ export default function HomePage() {
         }
     }, []);
 
+    useEffect(() => {
+        if (!loading && osList) {
+            // After the initial load, start checking for new orders
+            if (!isFirstLoad) {
+                // Check if a new item was added
+                if (osList.length > prevOsListLength.current) {
+                    const latestOs = osList[0]; // Assuming list is ordered by creation date desc
+                    // If the latest OS was not just created by this device, show notification
+                    if (latestOs && latestOs.id !== justCreatedId) {
+                       showNotification(
+                           "Nova O.S. Recebida!",
+                           `Uma nova ordem de serviço foi registrada para: ${latestOs.clientName}`
+                       );
+                    }
+                }
+            } else {
+                // It's the first load, don't show notifications
+                isFirstLoad = false;
+            }
+             // Update the previous length for the next comparison
+            prevOsListLength.current = osList.length;
+        }
+    }, [osList, loading]);
+
 
     const handleEdit = (os: ServiceOrder) => {
         setEditingOs(os);
@@ -28,8 +72,12 @@ export default function HomePage() {
         formElement?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
-    const handleFinish = () => {
+    const handleFinish = (newOsId?: string) => {
         setEditingOs(null);
+        if (newOsId) {
+            justCreatedId = newOsId;
+            clearJustCreatedId();
+        }
     };
 
     return (

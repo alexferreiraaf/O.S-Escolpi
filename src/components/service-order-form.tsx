@@ -59,7 +59,7 @@ const formSchema = z.object({
 interface ServiceOrderFormProps {
   id: string;
   editingOs: ServiceOrder | null;
-  onFinish: () => void;
+  onFinish: (newOsId?: string) => void;
   existingOrders: ServiceOrder[];
 }
 
@@ -194,6 +194,8 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
         const docRef = doc(firestore, 'service_orders', editingOs.id);
         await updateDoc(docRef, dataPayload);
         toast({ title: "Sucesso!", description: "Ordem de Serviço atualizada." });
+        form.reset();
+        onFinish();
       } else {
         const collectionRef = collection(firestore, 'service_orders');
         const newData = {
@@ -201,12 +203,12 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
           createdAt: serverTimestamp(),
           status: 'Pendente' as const,
         }
-        await addDoc(collectionRef, newData);
+        const newDocRef = await addDoc(collectionRef, newData);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
         showNotification("Nova O.S. Criada!", `Uma nova ordem de serviço foi registrada para: ${values.clientName}`);
+        form.reset();
+        onFinish(newDocRef.id);
       }
-      form.reset();
-      onFinish();
     } catch (e: any) {
       console.error("Error saving to Firestore:", e);
       toast({ variant: "destructive", title: "Erro ao Salvar", description: e.message || "Falha ao salvar a Ordem de Serviço." });
