@@ -156,6 +156,12 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
     }
   }
 
+  const showNotification = (title: string, body: string) => {
+      if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification(title, { body });
+      }
+  }
+
 
   const onSubmit = async (values: ServiceOrderFormData) => {
     if (!firestore) {
@@ -197,6 +203,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
         }
         await addDoc(collectionRef, newData);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
+        showNotification("Nova O.S. Criada!", `Uma nova ordem de serviço foi registrada para: ${values.clientName}`);
       }
       form.reset();
       onFinish();

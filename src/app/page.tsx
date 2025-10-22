@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ServiceOrder } from '@/lib/types';
 import ServiceOrderForm from '@/components/service-order-form';
 import ServiceOrderList from '@/components/service-order-list';
@@ -13,6 +13,14 @@ const FORM_ID = 'service-order-form';
 export default function HomePage() {
     const [editingOs, setEditingOs] = useState<ServiceOrder | null>(null);
     const { osList, loading } = useServiceOrders();
+
+    useEffect(() => {
+        // Pede permissão para notificações quando o componente é montado.
+        if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+    }, []);
+
 
     const handleEdit = (os: ServiceOrder) => {
         setEditingOs(os);
