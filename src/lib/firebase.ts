@@ -13,21 +13,28 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-let db: Firestore;
+let db: Firestore | null = null;
 
-// This function ensures firebase is only initialized on the client
-export const getDb = () => {
-  if (typeof window !== 'undefined') {
-    if (!getApps().length) {
-      app = initializeApp(firebaseConfig);
-    } else {
-      app = getApp();
+function initializeFirebase() {
+    if (typeof window !== 'undefined') {
+        if (!getApps().length) {
+            app = initializeApp(firebaseConfig);
+        } else {
+            app = getApp();
+        }
+        db = getFirestore(app);
     }
+}
+
+// Initialize on first load
+initializeFirebase();
+
+export const getDb = (): Firestore => {
+    // Re-initialize if db is not available (e.g. after a hot reload in dev)
     if (!db) {
-      db = getFirestore(app);
+        initializeFirebase();
     }
-  }
-  // On the server, 'db' will be undefined, but it should not be used there.
-  // @ts-ignore
-  return db;
+    // We can assert that db is not null here because initializeFirebase() will set it.
+    // The server-side rendering will not call getDb, this is only for client components.
+    return db!;
 };
