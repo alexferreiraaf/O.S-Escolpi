@@ -57,6 +57,10 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
   const handleStatusUpdate = async (status: ServiceOrderStatus) => {
     try {
       const { db } = getServices();
+      if (!db) {
+        toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
+        return;
+      }
       const docRef = doc(db, 'service_orders', os.id);
       await updateDoc(docRef, { status });
       toast({ title: "Status Atualizado", description: `Ordem de serviço movida para "${status}".` });
@@ -69,6 +73,10 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
   const handleDelete = async () => {
     try {
       const { db } = getServices();
+      if (!db) {
+        toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
+        return;
+      }
       const docRef = doc(db, 'service_orders', os.id);
       await deleteDoc(docRef);
       toast({

@@ -19,10 +19,16 @@ export function useServiceOrders() {
             return;
         };
 
+        const { db } = getServices();
+        if (!db) {
+            setError("Banco de dados não inicializado.");
+            setLoading(false);
+            return;
+        }
+
         let unsubscribe: () => void;
 
         try {
-            const { db } = getServices();
             const collectionPath = `service_orders`;
             
             const q = query(

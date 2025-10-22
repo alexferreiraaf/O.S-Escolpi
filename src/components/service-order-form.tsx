@@ -179,13 +179,18 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
       return;
     }
 
+    const { db } = getServices();
+    if (!db) {
+      toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
+      return;
+    }
+
     const data: ServiceOrderFormData = {
       ...values,
       createdBy: user.email
     }
 
     try {
-      const { db } = getServices();
       const COLLECTION_PATH = `service_orders`;
 
       if (editingOs) {
