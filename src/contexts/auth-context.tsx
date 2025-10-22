@@ -13,15 +13,6 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { firebaseConfig } from '@/firebase/config';
 
-let firebaseApp: FirebaseApp | undefined;
-let firebaseAuth: Auth | undefined;
-let firestoreDb: Firestore | undefined;
-
-function getFirebaseServices() {
-  // This function now just returns the services, it doesn't initialize.
-  return { app: firebaseApp, auth: firebaseAuth, db: firestoreDb };
-}
-
 interface AuthContextType {
   user: User | null;
   userId: string | null;
@@ -32,6 +23,12 @@ interface AuthContextType {
   getServices: () => { app?: FirebaseApp; auth?: Auth; db?: Firestore };
 }
 
+// These will be initialized on the client-side
+let firebaseApp: FirebaseApp | undefined;
+let firebaseAuth: Auth | undefined;
+let firestoreDb: Firestore | undefined;
+
+
 const AuthContext = createContext<AuthContextType>({ 
   user: null, 
   userId: null, 
@@ -39,7 +36,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => { throw new Error("Firebase Auth is not initialized."); },
   signup: async () => { throw new Error("Firebase Auth is not initialized."); },
   logout: async () => { throw new Error("Firebase Auth is not initialized."); },
-  getServices: getFirebaseServices,
+  getServices: () => ({ app: firebaseApp, auth: firebaseAuth, db: firestoreDb }),
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -47,14 +44,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthReady, setIsAuthReady] = useState(false);
   
   useEffect(() => {
-    // This effect runs only on the client-side
-    if (getApps().length === 0) {
-      firebaseApp = initializeApp(firebaseConfig);
-    } else {
-      firebaseApp = getApp();
+    // This effect runs only once on the client-side
+    if (!firebaseApp) {
+        if (getApps().length === 0) {
+            firebaseApp = initializeApp(firebaseConfig);
+        } else {
+            firebaseApp = getApp();
+        }
+        firebaseAuth = getAuth(firebaseApp);
+        firestoreDb = getFirestore(firebaseApp);
     }
-    firebaseAuth = getAuth(firebaseApp);
-    firestoreDb = getFirestore(firebaseApp);
 
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       setUser(user);
@@ -65,21 +64,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (email: string, pass: string) => {
-    const { auth } = getFirebaseServices();
-    if (!auth) throw new Error("Firebase Auth is not initialized.");
-    return signInWithEmailAndPassword(auth, email, pass);
+    if (!firebaseAuth) throw new Error("Firebase Auth is not initialized.");
+    return signInWithEmailAndPassword(firebaseAuth, email, pass);
   };
   
   const signup = (email: string, pass: string) => {
-    const { auth } = getFirebaseServices();
-    if (!auth) throw new Error("Firebase Auth is not initialized.");
-    return createUserWithEmailAndPassword(auth, email, pass);
+    if (!firebaseAuth) throw new Error("Firebase Auth is not initialized.");
+    return createUserWithEmailAndPassword(firebaseAuth, email, pass);
   };
 
   const logout = () => {
-    const { auth } = getFirebaseServices();
-    if (!auth) throw new Error("Firebase Auth is not initialized.");
-    return signOut(auth);
+    if (!firebaseAuth) throw new Error("Firebase Auth is not initialized.");
+    return signOut(firebaseAuth);
   }
 
   const value = { 
@@ -89,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     logout,
-    getServices: getFirebaseServices,
+    getServices: () => ({ app: firebaseApp, auth: firebaseAuth, db: firestoreDb }),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
