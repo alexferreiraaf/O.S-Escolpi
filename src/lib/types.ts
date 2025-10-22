@@ -27,6 +27,8 @@ export interface ServiceOrder {
   remoteAccessCode?: string;
   createdAt: Timestamp | null;
   status: ServiceOrderStatus;
+  userId: string;
+  createdBy: string;
 }
 
 export type ServiceOrderFormData = {
@@ -45,5 +47,3 @@ export type ServiceOrderFormData = {
   remoteAccessPhoto?: string;
   remoteAccessCode?: string;
 };
-
-    

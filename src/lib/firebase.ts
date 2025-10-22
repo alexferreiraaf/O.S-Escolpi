@@ -2,6 +2,7 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { getAuth, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -13,16 +14,24 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-let db: Firestore | null = null;
+let auth: Auth;
+let db: Firestore;
 
 function initializeFirebase() {
     if (typeof window !== 'undefined') {
         if (!getApps().length) {
-            app = initializeApp(firebaseConfig);
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+            } catch (error) {
+                console.error("Error initializing Firebase", error);
+            }
         } else {
             app = getApp();
+            auth = getAuth(app);
+            db = getFirestore(app);
         }
-        db = getFirestore(app);
     }
 }
 
@@ -30,11 +39,15 @@ function initializeFirebase() {
 initializeFirebase();
 
 export const getDb = (): Firestore => {
-    // Re-initialize if db is not available (e.g. after a hot reload in dev)
     if (!db) {
         initializeFirebase();
     }
-    // We can assert that db is not null here because initializeFirebase() will set it.
-    // The server-side rendering will not call getDb, this is only for client components.
-    return db!;
+    return db;
+};
+
+export const getFirebaseAuth = (): Auth => {
+    if (!auth) {
+        initializeFirebase();
+    }
+    return auth;
 };

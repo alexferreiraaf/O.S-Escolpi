@@ -6,7 +6,7 @@ import type { ServiceOrder, ServiceOrderStatus } from "@/lib/types";
 import { Button, buttonVariants } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, Trash2 } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, Trash2, User } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,
@@ -211,6 +211,12 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
       </div>
 
       <div className="text-sm space-y-2 text-foreground">
+        {os.createdBy && (
+            <p className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground font-semibold">Responsável: {os.createdBy}</span>
+            </p>
+        )}
         {os.contact && (
           <p className="flex items-center gap-2">
             <Phone className="h-4 w-4 text-muted-foreground" />
