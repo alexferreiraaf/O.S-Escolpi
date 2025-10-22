@@ -12,6 +12,7 @@ import {
     updateProfile
 } from 'firebase/auth';
 import { Loader2 } from 'lucide-react';
+import { getDb } from '@/lib/firebase'; // Ensure db is initialized
 
 interface AuthContextType {
     user: User | null;
@@ -30,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
     useEffect(() => {
+        getDb(); // Initialize firebase
         const auth = getFirebaseAuth();
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
@@ -43,11 +45,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (loading) return;
 
         const isAuthPage = pathname === '/login' || pathname === '/signup';
+        const isRootPage = pathname === '/';
 
-        if (!user && !isAuthPage) {
+        if (!user && !isAuthPage && !isRootPage) {
             router.push('/login');
         } else if (user && isAuthPage) {
-            router.push('/');
+            router.push('/dashboard');
         }
     }, [user, loading, pathname, router]);
 
@@ -56,7 +59,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         if (userCredential.user) {
             await updateProfile(userCredential.user, { displayName });
-            // Manually update the user state to reflect the displayName immediately
             setUser({ ...userCredential.user, displayName });
         }
     };
@@ -69,11 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = async () => {
         const auth = getFirebaseAuth();
         await signOut(auth);
+        router.push('/login');
     };
 
     const value = { user, loading, signup, login, logout };
 
-    if (loading) {
+    const isAuthFlowPage = pathname === '/login' || pathname === '/signup' || pathname === '/';
+    if (loading && !isAuthFlowPage) {
          return (
             <div className="flex h-screen w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -81,7 +85,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
     }
     
-    // Don't render auth pages if user is logged in to prevent flash of content
     const isAuthPage = pathname === '/login' || pathname === '/signup';
     if(user && isAuthPage) {
        return (
@@ -91,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
     }
 
+    // Render children for all other cases
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

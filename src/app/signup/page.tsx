@@ -36,7 +36,7 @@ export default function SignupPage() {
     setError(null);
     try {
       await signup(data.email, data.password, data.displayName);
-      router.push('/');
+      router.push('/dashboard');
     } catch (err) {
       setError('Falha ao criar conta. O email pode já estar em uso.');
       console.error(err);

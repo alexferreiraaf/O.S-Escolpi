@@ -34,7 +34,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await login(data.email, data.password);
-      router.push('/');
+      router.push('/dashboard');
     } catch (err) {
       setError('Falha ao fazer login. Verifique suas credenciais.');
       console.error(err);
