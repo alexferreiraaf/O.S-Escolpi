@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { ThemeToggleButton } from '@/components/theme-toggle-button';
 import { useAuth } from '@/contexts/auth-context';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   email: z.string().email('Email inválido.'),
@@ -24,7 +25,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const { user, isAuthReady, login } = useAuth();
+  const { user, isAuthReady, login, loginAnonymously } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,6 +64,23 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   }
+
+  const handleAnonymousLogin = async () => {
+    setIsLoading(true);
+    try {
+      await loginAnonymously();
+      // O useEffect cuidará do redirecionamento
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Falha no Login Anônimo',
+        description: 'Não foi possível entrar como visitante. Tente novamente.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (!isAuthReady || user) {
     return (
@@ -123,6 +141,12 @@ export default function LoginPage() {
               Cadastre-se
             </Link>
           </p>
+          <div className="my-4 flex items-center before:flex-1 before:border-t before:border-border after:flex-1 after:border-t after:border-border">
+            <p className="mx-4 text-center text-sm text-muted-foreground">OU</p>
+          </div>
+           <Button variant="outline" className="w-full" onClick={handleAnonymousLogin} disabled={isLoading}>
+            {isLoading ? <Loader2 className="animate-spin" /> : 'Entrar como Visitante'}
+          </Button>
         </CardContent>
       </Card>
     </div>

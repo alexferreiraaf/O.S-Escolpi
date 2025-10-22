@@ -7,6 +7,7 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut,
+  signInAnonymously,
   type Auth,
 } from 'firebase/auth';
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
@@ -30,6 +31,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<any>;
   signup: (email: string, pass: string) => Promise<any>;
   logout: () => Promise<void>;
+  loginAnonymously: () => Promise<any>;
   getServices: () => { app: FirebaseApp; auth: Auth; db: Firestore };
 }
 
@@ -45,6 +47,7 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => { throw new Error("Firebase Auth is not initialized."); },
   signup: async () => { throw new Error("Firebase Auth is not initialized."); },
   logout: async () => { throw new Error("Firebase Auth is not initialized."); },
+  loginAnonymously: async () => { throw new Error("Firebase Auth is not initialized."); },
   getServices: () => {
     if (!firebaseApp || !firebaseAuth || !firestoreDb) {
       throw new Error("Firebase services are not available.");
@@ -96,6 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!firebaseAuth) throw new Error("Firebase Auth is not initialized.");
     return signOut(firebaseAuth);
   }
+  
+  const loginAnonymously = () => {
+    if (!firebaseAuth) throw new Error("Firebase Auth is not initialized.");
+    return signInAnonymously(firebaseAuth);
+  };
 
   const value = { 
     user,
@@ -104,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     logout,
+    loginAnonymously,
     getServices: () => {
       if (!firebaseApp || !firebaseAuth || !firestoreDb) {
         throw new Error("Firebase services are not available.");
