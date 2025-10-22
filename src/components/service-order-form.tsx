@@ -20,6 +20,7 @@ import {
   Input,
   RadioGroup,
   RadioGroupItem,
+  Textarea,
 } from "@/components/ui";
 import type { ServiceOrder, ServiceOrderFormData, DigitalCertificate } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +43,7 @@ const formSchema = z.object({
     ifoodPassword: z.string().optional(),
     dll: z.string().optional(),
     digitalCertificate: z.custom<DigitalCertificate>().optional().nullable(),
+    observations: z.string().optional(),
     remoteAccessPhoto: z.string().optional(),
     remoteAccessCode: z.string().optional(),
 }).refine(data => {
@@ -81,6 +83,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
       ifoodPassword: "",
       dll: "",
       digitalCertificate: null,
+      observations: "",
       remoteAccessPhoto: "",
       remoteAccessCode: "",
     },
@@ -104,6 +107,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
         ifoodPassword: editingOs.ifoodCredentials?.password || '',
         dll: editingOs.dll,
         digitalCertificate: editingOs.digitalCertificate || null,
+        observations: editingOs.observations || '',
         remoteAccessPhoto: editingOs.remoteAccessPhoto || '',
         remoteAccessCode: editingOs.remoteAccessCode || '',
       });
@@ -121,6 +125,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
           ifoodPassword: "",
           dll: "",
           digitalCertificate: null,
+          observations: "",
           remoteAccessPhoto: "",
           remoteAccessCode: "",
         });
@@ -169,6 +174,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
       ifoodIntegration: values.ifoodIntegration,
       dll: values.dll || '',
       digitalCertificate: values.digitalCertificate || null,
+      observations: values.observations || '',
       remoteAccessPhoto: values.remoteAccessPhoto || '',
       remoteAccessCode: values.remoteAccessCode || '',
       ifoodCredentials: values.ifoodIntegration === 'Sim' ? {
@@ -410,6 +416,23 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
                   )}
               </FormItem>
             )}/>
+            
+            <FormField
+              control={form.control}
+              name="observations"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observações</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Detalhes sobre o serviço, configurações específicas, etc."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             
             <div className="flex justify-end gap-2 mt-8">
                 <Button type="button" variant="ghost" onClick={() => {form.reset(); onFinish();}}>Cancelar</Button>

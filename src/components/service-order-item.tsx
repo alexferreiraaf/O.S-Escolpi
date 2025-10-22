@@ -6,7 +6,7 @@ import type { ServiceOrder, ServiceOrderStatus } from "@/lib/types";
 import { Button, buttonVariants } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, Trash2 } from "lucide-react";
+import { CheckCircle2, Cog, Info, Pencil, Download, History, Phone, MapPin, KeyRound, Monitor, FileDown, Trash2, FileText } from "lucide-react";
 import Image from "next/image";
 import {
   Dialog,
@@ -243,6 +243,12 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
           )}
         </p>
 
+        {os.observations && (
+          <div className="space-y-1 pt-2">
+            <h4 className="font-bold text-primary flex items-center gap-2"><FileText className="h-4 w-4" /> Observações</h4>
+            <p className="text-muted-foreground whitespace-pre-wrap text-xs pl-6">{os.observations}</p>
+          </div>
+        )}
         
         <div className="space-y-2 pt-2 border-t mt-2">
             <h4 className="font-bold text-primary flex items-center gap-2"><Monitor className="h-4 w-4" /> Acesso Remoto</h4>
