@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { db } from "@/lib/firebase";
+import { getDb } from "@/lib/firebase";
 import { doc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
 
 
@@ -54,6 +54,7 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
 
   const handleStatusUpdate = async (status: ServiceOrderStatus) => {
     try {
+      const db = getDb();
       if (!db) {
         toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
         return;
@@ -69,6 +70,7 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
 
   const handleDelete = async () => {
     try {
+      const db = getDb();
       if (!db) {
         toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
         return;

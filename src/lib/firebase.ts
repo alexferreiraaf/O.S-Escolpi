@@ -15,18 +15,19 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let db: Firestore;
 
-try {
-  if (typeof window !== "undefined") {
-    if (getApps().length === 0) {
+// This function ensures firebase is only initialized on the client
+export const getDb = () => {
+  if (typeof window !== 'undefined') {
+    if (!getApps().length) {
       app = initializeApp(firebaseConfig);
     } else {
       app = getApp();
     }
-    db = getFirestore(app);
+    if (!db) {
+      db = getFirestore(app);
+    }
   }
-} catch (e) {
-  console.error("Firebase initialization error", e);
-}
-
-// @ts-ignore
-export { db, app };
+  // On the server, 'db' will be undefined, but it should not be used there.
+  // @ts-ignore
+  return db;
+};

@@ -26,7 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
-import { db } from "@/lib/firebase";
+import { getDb } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 
 
@@ -173,6 +173,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
 
 
   const onSubmit = async (values: ServiceOrderFormData) => {
+    const db = getDb();
     if (!db) {
       toast({ variant: "destructive", title: "Erro", description: "Banco de dados não inicializado." });
       return;

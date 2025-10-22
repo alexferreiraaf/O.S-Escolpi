@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { ServiceOrder } from '@/lib/types';
-import { db } from "@/lib/firebase";
+import { getDb } from "@/lib/firebase";
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 export function useServiceOrders() {
@@ -11,6 +11,7 @@ export function useServiceOrders() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        const db = getDb();
         if (!db) {
             setError("Banco de dados não inicializado.");
             setLoading(false);
