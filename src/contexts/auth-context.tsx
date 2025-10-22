@@ -11,7 +11,17 @@ import {
 } from 'firebase/auth';
 import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
-import { firebaseConfig } from '@/firebase/config';
+
+// Define the config object here, reading from environment variables
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
 
 interface AuthContextType {
   user: User | null;
@@ -49,8 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   useEffect(() => {
     // This effect runs only once on the client-side
-    
-    // Check if all required config keys are present
     const isConfigValid = firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId;
 
     if (isConfigValid) {
