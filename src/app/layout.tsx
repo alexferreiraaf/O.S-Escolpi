@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'Service Order Central',
+  title: 'O.S Escolpi',
   description: 'Gestão de Ordens de Serviço - Escolpi Informática',
 };
 
