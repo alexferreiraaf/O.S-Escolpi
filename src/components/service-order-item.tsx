@@ -28,8 +28,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking } from "@/firebase";
-import { doc, Timestamp } from 'firebase/firestore';
+import { useFirestore } from "@/firebase";
+import { doc, Timestamp, updateDoc, deleteDoc } from 'firebase/firestore';
 
 
 function formatDate(timestamp: Timestamp | undefined | null): string {
@@ -59,7 +59,7 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
       return;
     }
     const docRef = doc(firestore, 'service_orders', os.id);
-    updateDocumentNonBlocking(docRef, { status });
+    await updateDoc(docRef, { status });
     toast({ title: "Status Atualizado", description: `Ordem de serviço movida para "${status}".` });
   };
 
@@ -69,7 +69,7 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
       return;
     }
     const docRef = doc(firestore, 'service_orders', os.id);
-    deleteDocumentNonBlocking(docRef);
+    await deleteDoc(docRef);
     toast({
       title: "Ordem de Serviço Excluída",
       description: `A O.S. de ${os.clientName} foi removida.`,

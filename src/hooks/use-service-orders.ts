@@ -20,5 +20,9 @@ export function useServiceOrders() {
 
     const { data: osList, isLoading: loading, error } = useCollection<ServiceOrder>(q);
 
+    if (error) {
+        console.error("Firestore error:", error);
+    }
+
     return { osList, loading, error: error?.message || null };
 }

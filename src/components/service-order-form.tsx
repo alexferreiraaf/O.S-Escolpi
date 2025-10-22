@@ -26,8 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
-import { serverTimestamp } from 'firebase/firestore';
-import { useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
+import { serverTimestamp, addDoc, updateDoc, doc, collection } from 'firebase/firestore';
+import { useFirestore } from "@/firebase";
 
 
 const formSchema = z.object({
@@ -201,7 +201,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
     try {
       if (editingOs) {
         const docRef = doc(firestore, 'service_orders', editingOs.id);
-        updateDocumentNonBlocking(docRef, dataPayload);
+        await updateDoc(docRef, dataPayload);
         toast({ title: "Sucesso!", description: "Ordem de Serviço atualizada." });
       } else {
         const collectionRef = collection(firestore, 'service_orders');
@@ -210,14 +210,14 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
           createdAt: serverTimestamp(),
           status: 'Pendente' as const,
         }
-        addDocumentNonBlocking(collectionRef, newData);
+        await addDoc(collectionRef, newData);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
       }
       form.reset();
       onFinish();
     } catch (e: any) {
       console.error("Error saving to Firestore:", e);
-      toast({ variant: "destructive", title: "Erro ao Salvar", description: "Falha ao salvar a Ordem de Serviço." });
+      toast({ variant: "destructive", title: "Erro ao Salvar", description: e.message || "Falha ao salvar a Ordem de Serviço." });
     }
   };
 
