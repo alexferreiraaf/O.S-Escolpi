@@ -23,7 +23,6 @@ interface AuthContextType {
   getServices: () => { app: FirebaseApp; auth: Auth; db: Firestore };
 }
 
-// These will be initialized on the client-side
 let firebaseApp: FirebaseApp;
 let firebaseAuth: Auth;
 let firestoreDb: Firestore;
@@ -37,8 +36,8 @@ const AuthContext = createContext<AuthContextType>({
   signup: async () => { throw new Error("Firebase Auth is not initialized."); },
   logout: async () => { throw new Error("Firebase Auth is not initialized."); },
   getServices: () => {
-    if (!firebaseApp) {
-      throw new Error("Firebase is not initialized.");
+    if (!firebaseApp || !firebaseAuth || !firestoreDb) {
+      throw new Error("Firebase services are not available.");
     }
     return { app: firebaseApp, auth: firebaseAuth, db: firestoreDb };
   },
@@ -51,7 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // This effect runs only once on the client-side
     
-    if (firebaseConfig.apiKey) {
+    // Check if all required config keys are present
+    const isConfigValid = firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId;
+
+    if (isConfigValid) {
       if (getApps().length === 0) {
         firebaseApp = initializeApp(firebaseConfig);
       } else {
@@ -68,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return () => unsubscribe();
     } else {
       console.error("Firebase config keys are missing. Please set them in your environment variables.");
-      setIsAuthReady(true); // Mark as ready to prevent infinite loading
+      setIsAuthReady(true); // Mark as ready to prevent infinite loading on error
     }
   }, []);
 
