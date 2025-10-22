@@ -9,19 +9,8 @@ import {
   signOut,
   type Auth,
 } from 'firebase/auth';
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { initializeApp, getApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
-
-// This config is now read from environment variables, which is the correct way for Vercel.
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
 
 interface AuthContextType {
   user: User | null;
@@ -59,30 +48,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthReady, setIsAuthReady] = useState(false);
   
   useEffect(() => {
-    // This effect runs only once on the client-side, which is safe for Next.js/Vercel
-    if (getApps().length === 0) {
-      // Check if the config keys are provided
-      if (firebaseConfig.apiKey) {
+    // This effect runs only once on the client-side
+    
+    const firebaseConfig = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+    };
+
+    if (firebaseConfig.apiKey) {
+      if (getApps().length === 0) {
         firebaseApp = initializeApp(firebaseConfig);
-        firebaseAuth = getAuth(firebaseApp);
-        firestoreDb = getFirestore(firebaseApp);
       } else {
-        console.error("Firebase config keys are missing. Please set them in your environment variables.");
-        setIsAuthReady(true); // Mark as ready to prevent infinite loading
-        return;
+        firebaseApp = getApp();
       }
-    } else {
-      firebaseApp = getApp();
       firebaseAuth = getAuth(firebaseApp);
       firestoreDb = getFirestore(firebaseApp);
+
+      const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        setUser(user);
+        setIsAuthReady(true);
+      });
+
+      return () => unsubscribe();
+    } else {
+      console.error("Firebase config keys are missing. Please set them in your environment variables.");
+      setIsAuthReady(true); // Mark as ready to prevent infinite loading
     }
-
-    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
-      setUser(user);
-      setIsAuthReady(true);
-    });
-
-    return () => unsubscribe();
   }, []);
 
   const login = (email: string, pass: string) => {
