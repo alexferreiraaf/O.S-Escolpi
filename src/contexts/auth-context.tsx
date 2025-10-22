@@ -11,7 +11,17 @@ import {
 } from 'firebase/auth';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
-import { firebaseConfig } from '../../firebase.config.js';
+
+// This config is now read from environment variables, which is the correct way for Vercel.
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
 
 interface AuthContextType {
   user: User | null;
@@ -49,14 +59,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthReady, setIsAuthReady] = useState(false);
   
   useEffect(() => {
-    // This effect runs only once on the client-side
+    // This effect runs only once on the client-side, which is safe for Next.js/Vercel
     if (getApps().length === 0) {
-      firebaseApp = initializeApp(firebaseConfig);
+      // Check if the config keys are provided
+      if (firebaseConfig.apiKey) {
+        firebaseApp = initializeApp(firebaseConfig);
+        firebaseAuth = getAuth(firebaseApp);
+        firestoreDb = getFirestore(firebaseApp);
+      } else {
+        console.error("Firebase config keys are missing. Please set them in your environment variables.");
+        setIsAuthReady(true); // Mark as ready to prevent infinite loading
+        return;
+      }
     } else {
       firebaseApp = getApp();
+      firebaseAuth = getAuth(firebaseApp);
+      firestoreDb = getFirestore(firebaseApp);
     }
-    firebaseAuth = getAuth(firebaseApp);
-    firestoreDb = getFirestore(firebaseApp);
 
     const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       setUser(user);
@@ -89,8 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     logout,
     getServices: () => {
-      if (!firebaseApp) {
-        throw new Error("Firebase is not initialized.");
+      if (!firebaseApp || !firebaseAuth || !firestoreDb) {
+        throw new Error("Firebase services are not available.");
       }
       return { app: firebaseApp, auth: firebaseAuth, db: firestoreDb };
     },
