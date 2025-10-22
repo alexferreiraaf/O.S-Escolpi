@@ -1,8 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite que qualquer cliente leia e escreva na coleção service_orders
-    match /service_orders/{document=**} {
+    match /{document=**} {
       allow read, write: if true;
     }
   }
