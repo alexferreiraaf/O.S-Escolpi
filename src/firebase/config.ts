@@ -1,4 +1,3 @@
-
 // NOTE: This is a public-facing configuration object.
 // See https://firebase.google.com/docs/web/learn-more#config-object
 export const firebaseConfig = {
