@@ -1,11 +1,17 @@
-"use client";
+'use client';
 
-import { useEffect } from 'react';
-import { errorEmitter, FirestorePermissionError } from '@/lib/errors';
+import { useState, useEffect } from 'react';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Alert, AlertDescription } from './ui/alert';
 
+
+/**
+ * An invisible component that listens for globally emitted 'permission-error' events.
+ * It throws any received error to be caught by Next.js's global-error.tsx.
+ */
 export function FirebaseErrorListener() {
   const { toast } = useToast();
 
@@ -27,19 +33,19 @@ export function FirebaseErrorListener() {
                 <AlertDescription className="break-words">
                   <div className="flex items-center gap-2 mb-2">
                     <strong>Operação:</strong> 
-                    <Badge variant="destructive" className="font-mono">{error.operation}</Badge>
+                    <Badge variant="destructive" className="font-mono">{error.request.method}</Badge>
                   </div>
-                  <p><strong>Coleção:</strong> <code className="font-mono">{error.ref.path}</code></p>
+                  <p><strong>Caminho:</strong> <code className="font-mono">{error.request.path}</code></p>
                 </AlertDescription>
               </Alert>
             </div>
             
-            {error.resource && Object.keys(error.resource).length > 0 && (
+            {error.request.resource && Object.keys(error.request.resource.data).length > 0 && (
                <div className="space-y-2">
                 <h4 className="font-semibold">Dados da Requisição:</h4>
                 <div className="p-2 border border-destructive/50 rounded-md bg-destructive/10 max-h-48 overflow-auto">
                     <pre className="text-xs text-destructive-foreground/80 whitespace-pre-wrap break-all">
-                        <code>{JSON.stringify(error.resource, null, 2)}</code>
+                        <code>{JSON.stringify(error.request.resource.data, null, 2)}</code>
                     </pre>
                 </div>
               </div>
@@ -60,5 +66,6 @@ export function FirebaseErrorListener() {
     };
   }, [toast]);
 
+  // This component renders nothing.
   return null;
 }

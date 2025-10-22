@@ -26,9 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
-import { getDb } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc, type Firestore, type DocumentReference } from 'firebase/firestore';
-import { errorEmitter, FirestorePermissionError } from "@/lib/errors";
+import { serverTimestamp } from 'firebase/firestore';
+import { useFirestore, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
 
 
 const formSchema = z.object({
@@ -67,6 +66,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
   const { toast } = useToast();
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const firestore = useFirestore();
   
   const form = useForm<ServiceOrderFormData>({
     resolver: zodResolver(formSchema),
@@ -174,80 +174,50 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
 
 
   const onSubmit = async (values: ServiceOrderFormData) => {
-    const db = getDb();
-    if (!db) {
+    if (!firestore) {
       toast({ variant: "destructive", title: "Erro de Conexão", description: "Não foi possível conectar ao banco de dados." });
       return;
     }
-    const COLLECTION_PATH = `service_orders`;
-    let docRef: DocumentReference;
-    let operation: 'create' | 'update' = 'create';
-    let dataPayload: any;
-
+    
+    const dataPayload = {
+      clientName: values.clientName,
+      cpfCnpj: values.cpfCnpj || '',
+      contact: values.contact || '',
+      city: values.city || '',
+      state: values.state || '',
+      pedidoAgora: values.pedidoAgora,
+      mobile: values.mobile,
+      ifoodIntegration: values.ifoodIntegration,
+      dll: values.dll || '',
+      digitalCertificate: values.digitalCertificate || null,
+      remoteAccessPhoto: values.remoteAccessPhoto || '',
+      remoteAccessCode: values.remoteAccessCode || '',
+      ifoodCredentials: values.ifoodIntegration === 'Sim' ? {
+          email: values.ifoodEmail || '',
+          password: values.ifoodPassword || ''
+      } : null,
+    };
 
     try {
       if (editingOs) {
-        operation = 'update';
-        docRef = doc(db, COLLECTION_PATH, editingOs.id);
-        dataPayload = {
-            clientName: values.clientName,
-            cpfCnpj: values.cpfCnpj || '',
-            contact: values.contact || '',
-            city: values.city || '',
-            state: values.state || '',
-            pedidoAgora: values.pedidoAgora,
-            mobile: values.mobile,
-            ifoodIntegration: values.ifoodIntegration,
-            dll: values.dll || '',
-            digitalCertificate: values.digitalCertificate || null,
-            remoteAccessPhoto: values.remoteAccessPhoto || '',
-            remoteAccessCode: values.remoteAccessCode || '',
-            ifoodCredentials: values.ifoodIntegration === 'Sim' ? {
-                email: values.ifoodEmail || '',
-                password: values.ifoodPassword || ''
-            } : null,
-        };
-        await updateDoc(docRef, dataPayload);
+        const docRef = doc(firestore, 'service_orders', editingOs.id);
+        updateDocumentNonBlocking(docRef, dataPayload);
         toast({ title: "Sucesso!", description: "Ordem de Serviço atualizada." });
       } else {
-        operation = 'create';
-        docRef = doc(collection(db, COLLECTION_PATH));
-        dataPayload = {
-            clientName: values.clientName,
-            cpfCnpj: values.cpfCnpj || '',
-            contact: values.contact || '',
-            city: values.city || '',
-            state: values.state || '',
-            pedidoAgora: values.pedidoAgora,
-            mobile: values.mobile,
-            ifoodIntegration: values.ifoodIntegration,
-            dll: values.dll || '',
-            digitalCertificate: values.digitalCertificate || null,
-            remoteAccessPhoto: values.remoteAccessPhoto || '',
-            remoteAccessCode: values.remoteAccessCode || '',
-            ifoodCredentials: values.ifoodIntegration === 'Sim' ? {
-                email: values.ifoodEmail || '',
-                password: values.ifoodPassword || ''
-            } : null,
-            createdAt: serverTimestamp(),
-            status: 'Pendente' as const,
-        };
-        await addDoc(collection(db, COLLECTION_PATH), dataPayload);
+        const collectionRef = collection(firestore, 'service_orders');
+        const newData = {
+          ...dataPayload,
+          createdAt: serverTimestamp(),
+          status: 'Pendente' as const,
+        }
+        addDocumentNonBlocking(collectionRef, newData);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
       }
       form.reset();
       onFinish();
     } catch (e: any) {
-       if (e.code === 'permission-denied') {
-        errorEmitter.emit('permission-error', new FirestorePermissionError(
-          operation,
-          docRef,
-          dataPayload
-        ));
-      } else {
-        console.error("Error saving to Firestore:", e);
-        toast({ variant: "destructive", title: "Erro ao Salvar", description: "Falha ao salvar a Ordem de Serviço." });
-      }
+      console.error("Error saving to Firestore:", e);
+      toast({ variant: "destructive", title: "Erro ao Salvar", description: "Falha ao salvar a Ordem de Serviço." });
     }
   };
 

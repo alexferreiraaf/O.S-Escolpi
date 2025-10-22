@@ -43,14 +43,14 @@ export default function HomePage() {
                         key={editingOs?.id ?? 'new'}
                         editingOs={editingOs}
                         onFinish={handleFinish}
-                        existingOrders={osList}
+                        existingOrders={osList || []}
                     />
                 </div>
                 <div className="flex-1">
                   <Card>
                       <CardContent className="p-4 sm:p-6">
                           <ServiceOrderList 
-                            osList={osList} 
+                            osList={osList || []} 
                             onEdit={handleEdit} 
                             loading={loading}
                           />
