@@ -28,49 +28,18 @@ import {
 } from "@/components/ui/alert-dialog"
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getFirestore, doc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-function getFirebaseApp(): FirebaseApp {
-  if (!getApps().length) {
-    return initializeApp(firebaseConfig);
-  }
-  return getApp();
-}
-
-async function updateServiceOrderStatus(orderId: string, status: ServiceOrderStatus) {
-    const app = getFirebaseApp();
-    const db = getFirestore(app);
-    const COLLECTION_PATH = `service_orders`;
-    
-    const docRef = doc(db, COLLECTION_PATH, orderId);
-    return await updateDoc(docRef, { status });
-}
-
-async function deleteServiceOrder(orderId: string) {
-    const app = getFirebaseApp();
-    const db = getFirestore(app);
-    const COLLECTION_PATH = `service_orders`;
-
-    const docRef = doc(db, COLLECTION_PATH, orderId);
-    return await deleteDoc(docRef);
-}
+import { useAuth } from "@/contexts/auth-context";
+import { doc, updateDoc, Timestamp, deleteDoc } from 'firebase/firestore';
 
 
 function formatDate(timestamp: Timestamp | undefined | null): string {
-    if (timestamp && typeof timestamp.toDate === 'function') {
+    if (!timestamp) return 'Sem Data';
+    try {
         return timestamp.toDate().toLocaleDateString('pt-BR');
+    } catch (e) {
+        console.error("Error formatting timestamp:", e);
+        return "Data inválida";
     }
-    return 'Sem Data';
 }
 
 
@@ -82,10 +51,14 @@ interface ServiceOrderItemProps {
 export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
   const { toast } = useToast();
   const cardRef = useRef<HTMLDivElement>(null);
+  const { getServices } = useAuth();
+
 
   const handleStatusUpdate = async (status: ServiceOrderStatus) => {
     try {
-      await updateServiceOrderStatus(os.id, status);
+      const { db } = getServices();
+      const docRef = doc(db, 'service_orders', os.id);
+      await updateDoc(docRef, { status });
       toast({ title: "Status Atualizado", description: `Ordem de serviço movida para "${status}".` });
     } catch (e) {
       console.error(e);
@@ -95,7 +68,9 @@ export function ServiceOrderItem({ os, onEdit }: ServiceOrderItemProps) {
 
   const handleDelete = async () => {
     try {
-      await deleteServiceOrder(os.id);
+      const { db } = getServices();
+      const docRef = doc(db, 'service_orders', os.id);
+      await deleteDoc(docRef);
       toast({
         title: "Ordem de Serviço Excluída",
         description: `A O.S. de ${os.clientName} foi removida.`,

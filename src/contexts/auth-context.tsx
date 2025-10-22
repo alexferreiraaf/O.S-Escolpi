@@ -7,23 +7,18 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword,
   signOut,
+  type Auth,
 } from 'firebase/auth';
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
+import { getFirestore, type Firestore } from 'firebase/firestore';
+import { firebaseConfig } from '@/firebase/config';
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-function getFirebaseApp(): FirebaseApp {
-  if (!getApps().length) {
-    return initializeApp(firebaseConfig);
-  }
-  return getApp();
+// Helper function to initialize Firebase
+function getFirebaseServices(): { app: FirebaseApp; auth: Auth; db: Firestore } {
+  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  return { app, auth, db };
 }
 
 interface AuthContextType {
@@ -33,6 +28,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<any>;
   signup: (email: string, pass: string) => Promise<any>;
   logout: () => Promise<void>;
+  getServices: () => { app: FirebaseApp; auth: Auth; db: Firestore };
 }
 
 const AuthContext = createContext<AuthContextType>({ 
@@ -42,36 +38,32 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   signup: async () => {},
   logout: async () => {},
+  getServices: getFirebaseServices,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const { auth } = getFirebaseServices();
 
   useEffect(() => {
-    const app = getFirebaseApp();
-    const auth = getAuth(app);
-    
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setIsAuthReady(true);
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   const login = (email: string, pass: string) => {
-    const auth = getAuth(getFirebaseApp());
     return signInWithEmailAndPassword(auth, email, pass);
   };
   
   const signup = (email: string, pass: string) => {
-    const auth = getAuth(getFirebaseApp());
     return createUserWithEmailAndPassword(auth, email, pass);
   };
 
   const logout = () => {
-    const auth = getAuth(getFirebaseApp());
     return signOut(auth);
   }
 
@@ -82,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     login,
     signup,
     logout,
+    getServices: getFirebaseServices,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

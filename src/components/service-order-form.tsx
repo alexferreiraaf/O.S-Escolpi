@@ -27,83 +27,8 @@ import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
 import { useAuth } from "@/contexts/auth-context";
-import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-function getFirebaseApp(): FirebaseApp {
-  if (!getApps().length) {
-    return initializeApp(firebaseConfig);
-  }
-  return getApp();
-}
-
-async function addServiceOrder(data: ServiceOrderFormData) {
-    const app = getFirebaseApp();
-    const db = getFirestore(app);
-    const COLLECTION_PATH = `service_orders`;
-
-    const newOrder = {
-        clientName: data.clientName,
-        cpfCnpj: data.cpfCnpj || '',
-        contact: data.contact || '',
-        city: data.city || '',
-        state: data.state || '',
-        pedidoAgora: data.pedidoAgora,
-        mobile: data.mobile,
-        ifoodIntegration: data.ifoodIntegration,
-        dll: data.dll || '',
-        digitalCertificate: data.digitalCertificate || null,
-        remoteAccessPhoto: data.remoteAccessPhoto || '',
-        remoteAccessCode: data.remoteAccessCode || '',
-        createdBy: data.createdBy || '',
-        ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
-            email: data.ifoodEmail || '',
-            password: data.ifoodPassword || ''
-        } : null,
-        createdAt: serverTimestamp(),
-        status: 'Pendente' as const,
-    };
-
-    return await addDoc(collection(db, COLLECTION_PATH), newOrder);
-}
-
-async function updateServiceOrder(orderId: string, data: ServiceOrderFormData) {
-    const app = getFirebaseApp();
-    const db = getFirestore(app);
-    const COLLECTION_PATH = `service_orders`;
-
-    const orderUpdate = {
-        clientName: data.clientName,
-        cpfCnpj: data.cpfCnpj || '',
-        contact: data.contact || '',
-        city: data.city || '',
-        state: data.state || '',
-        pedidoAgora: data.pedidoAgora,
-        mobile: data.mobile,
-        ifoodIntegration: data.ifoodIntegration,
-        dll: data.dll || '',
-        digitalCertificate: data.digitalCertificate || null,
-        remoteAccessPhoto: data.remoteAccessPhoto || '',
-        remoteAccessCode: data.remoteAccessCode || '',
-        createdBy: data.createdBy || '',
-        ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
-            email: data.ifoodEmail || '',
-            password: data.ifoodPassword || ''
-        } : null,
-    };
-    
-    const docRef = doc(db, COLLECTION_PATH, orderId);
-    return await updateDoc(docRef, orderUpdate);
-}
 
 const formSchema = z.object({
     clientName: z.string().min(1, 'O nome do cliente é obrigatório.'),
@@ -141,7 +66,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
   const { toast } = useToast();
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const { user } = useAuth();
+  const { user, getServices } = useAuth();
   
   const form = useForm<Omit<ServiceOrderFormData, 'createdBy'>>({
     resolver: zodResolver(formSchema),
@@ -260,11 +185,55 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
     }
 
     try {
+      const { db } = getServices();
+      const COLLECTION_PATH = `service_orders`;
+
       if (editingOs) {
-        await updateServiceOrder(editingOs.id, data);
+        const orderUpdate = {
+            clientName: data.clientName,
+            cpfCnpj: data.cpfCnpj || '',
+            contact: data.contact || '',
+            city: data.city || '',
+            state: data.state || '',
+            pedidoAgora: data.pedidoAgora,
+            mobile: data.mobile,
+            ifoodIntegration: data.ifoodIntegration,
+            dll: data.dll || '',
+            digitalCertificate: data.digitalCertificate || null,
+            remoteAccessPhoto: data.remoteAccessPhoto || '',
+            remoteAccessCode: data.remoteAccessCode || '',
+            createdBy: data.createdBy || '',
+            ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
+                email: data.ifoodEmail || '',
+                password: data.ifoodPassword || ''
+            } : null,
+        };
+        const docRef = doc(db, COLLECTION_PATH, editingOs.id);
+        await updateDoc(docRef, orderUpdate);
         toast({ title: "Sucesso!", description: "Ordem de Serviço atualizada." });
       } else {
-        await addServiceOrder(data);
+        const newOrder = {
+            clientName: data.clientName,
+            cpfCnpj: data.cpfCnpj || '',
+            contact: data.contact || '',
+            city: data.city || '',
+            state: data.state || '',
+            pedidoAgora: data.pedidoAgora,
+            mobile: data.mobile,
+            ifoodIntegration: data.ifoodIntegration,
+            dll: data.dll || '',
+            digitalCertificate: data.digitalCertificate || null,
+            remoteAccessPhoto: data.remoteAccessPhoto || '',
+            remoteAccessCode: data.remoteAccessCode || '',
+            createdBy: data.createdBy || '',
+            ifoodCredentials: data.ifoodIntegration === 'Sim' ? {
+                email: data.ifoodEmail || '',
+                password: data.ifoodPassword || ''
+            } : null,
+            createdAt: serverTimestamp(),
+            status: 'Pendente' as const,
+        };
+        await addDoc(collection(db, COLLECTION_PATH), newOrder);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
       }
       form.reset();
