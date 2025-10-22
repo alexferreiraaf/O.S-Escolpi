@@ -1,10 +1,7 @@
-
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite que qualquer pessoa (autenticada ou não) leia e escreva
-    // na coleção service_orders.
+    // Permite acesso público de leitura e escrita para a coleção service_orders
     match /service_orders/{document=**} {
       allow read, write: if true;
     }
