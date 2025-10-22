@@ -1,8 +1,5 @@
-"use client";
-
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getFirestore, type Firestore } from 'firebase/firestore';
-import { getAuth, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,40 +11,32 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-let auth: Auth;
 let db: Firestore;
 
 function initializeFirebase() {
-    if (typeof window !== 'undefined') {
-        if (!getApps().length) {
-            try {
-                app = initializeApp(firebaseConfig);
-                auth = getAuth(app);
-                db = getFirestore(app);
-            } catch (error) {
-                console.error("Error initializing Firebase", error);
-            }
-        } else {
-            app = getApp();
-            auth = getAuth(app);
-            db = getFirestore(app);
-        }
+  if (typeof window !== 'undefined') {
+    if (!getApps().length) {
+      try {
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        console.log("Firebase initialized");
+      } catch (error) {
+        console.error("Error initializing Firebase", error);
+      }
+    } else {
+      app = getApp();
+      db = getFirestore(app);
     }
+  }
 }
 
-// Initialize on first load
 initializeFirebase();
 
 export const getDb = (): Firestore => {
-    if (!db) {
-        initializeFirebase();
-    }
-    return db;
-};
-
-export const getFirebaseAuth = (): Auth => {
-    if (!auth) {
-        initializeFirebase();
-    }
-    return auth;
+  if (!db) {
+    // This case might happen if the initial call was on the server.
+    // We re-initialize here to be safe, but it should ideally be initialized once.
+    initializeFirebase();
+  }
+  return db;
 };

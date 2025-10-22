@@ -27,8 +27,7 @@ import { Loader2, Trash2 } from "lucide-react";
 import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
 import { getDb } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
-import { useAuth } from "@/contexts/auth-context";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, type Firestore } from 'firebase/firestore';
 
 
 const formSchema = z.object({
@@ -65,7 +64,6 @@ interface ServiceOrderFormProps {
 
 export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrderFormProps) {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
@@ -176,8 +174,8 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
 
   const onSubmit = async (values: ServiceOrderFormData) => {
     const db = getDb();
-    if (!db || !user) {
-      toast({ variant: "destructive", title: "Erro", description: "Usuário não autenticado ou banco de dados não inicializado." });
+    if (!db) {
+      toast({ variant: "destructive", title: "Erro de Conexão", description: "Não foi possível conectar ao banco de dados." });
       return;
     }
 
@@ -226,8 +224,6 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
             } : null,
             createdAt: serverTimestamp(),
             status: 'Pendente' as const,
-            userId: user.uid,
-            createdBy: user.displayName || user.email,
         };
         await addDoc(collection(db, COLLECTION_PATH), newOrder);
         toast({ title: "Sucesso!", description: "Ordem de Serviço criada." });
@@ -235,8 +231,8 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
       form.reset();
       onFinish();
     } catch (e) {
-      console.error(e);
-      toast({ variant: "destructive", title: "Erro", description: "Falha ao salvar a Ordem de Serviço." });
+      console.error("Error saving to Firestore:", e);
+      toast({ variant: "destructive", title: "Erro ao Salvar", description: "Falha ao salvar a Ordem de Serviço." });
     }
   };
 
