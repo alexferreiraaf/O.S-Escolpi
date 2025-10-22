@@ -4,7 +4,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Button,
   Card,
@@ -24,7 +24,6 @@ import {
 import type { ServiceOrder, ServiceOrderFormData, DigitalCertificate } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2 } from "lucide-react";
-import { suggestDllName } from '@/ai/flows/suggest-dll-name';
 import { CameraCapture } from "./camera-capture";
 import { serverTimestamp, addDoc, updateDoc, doc, collection } from 'firebase/firestore';
 import { useFirestore } from "@/firebase";
@@ -64,7 +63,6 @@ interface ServiceOrderFormProps {
 
 export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrderFormProps) {
   const { toast } = useToast();
-  const [isSuggestingDll, setIsSuggestingDll] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const firestore = useFirestore();
   
@@ -128,25 +126,6 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
         });
     }
   }, [editingOs, form]);
-
-  const generateDllSuggestion = async () => {
-    const clientName = form.getValues('clientName');
-    if (!clientName) return;
-
-    setIsSuggestingDll(true);
-    try {
-        const result = await suggestDllName({ clientName });
-        if (result.suggestedDllName) {
-            form.setValue('dll', result.suggestedDllName);
-            toast({ title: "Sugestão de DLL gerada!", description: `A DLL sugerida foi: ${result.suggestedDllName}` });
-        }
-    } catch (e) {
-        console.error("DLL suggestion failed:", e);
-        toast({ variant: 'destructive', title: "Erro na IA", description: "Não foi possível gerar sugestão de DLL." });
-    } finally {
-        setIsSuggestingDll(false);
-    }
-  };
 
   const handleCertificateFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -370,12 +349,7 @@ export default function ServiceOrderForm({ id, editingOs, onFinish }: ServiceOrd
             <FormField control={form.control} name="dll" render={({ field }) => (
                 <FormItem>
                   <FormLabel>DLL</FormLabel>
-                  <div className="flex items-center gap-2">
-                    <FormControl><Input {...field} placeholder="Ex: NFePlus.dll" /></FormControl>
-                    <Button type="button" variant="outline" onClick={generateDllSuggestion} disabled={isSuggestingDll || !form.getValues('clientName')}>
-                        {isSuggestingDll ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sugerir'}
-                    </Button>
-                  </div>
+                  <FormControl><Input {...field} placeholder="Ex: NFePlus.dll" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}/>
